@@ -11,8 +11,9 @@ The Automators DataMaker MCP (Model Context Protocol) server provides a seamless
 
 ## 📦 Installation
 
+Add the following to your `mcp.json` file:
+
 ```json
-// cursor mcp.json
 {
   "mcpServers": {
     "datamaker": {
