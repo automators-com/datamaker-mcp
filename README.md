@@ -60,4 +60,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-ISC License - See [LICENSE](LICENSE) for details. 
+MIT License - See [LICENSE](LICENSE) for details. 
