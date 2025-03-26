@@ -1,0 +1,30 @@
+{
+  "name": "@automators/datamaker-mcp",
+  "version": "1.0.0",
+  "description": "The Automators DataMaker MCP server.",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "datamaker-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod 755 build/index.js",
+    "dev": "dotenv -e .env -- sh -c 'pnpm dlx @modelcontextprotocol/inspector -e DATAMAKER_URL=\"$DATAMAKER_URL\" -e DATAMAKER_API_KEY=\"$DATAMAKER_API_KEY\" node build/index.js'"
+  },
+  "files": [
+    "build"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.5.2",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.13",
+    "dotenv-cli": "^8.0.0",
+    "typescript": "^5.8.2"
+  }
+}
