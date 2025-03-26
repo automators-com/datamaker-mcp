@@ -1,23 +1,33 @@
 {
   "name": "@automators/datamaker-mcp",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "The Automators DataMaker MCP server.",
-  "main": "index.js",
+  "main": "./build/index.js",
   "type": "module",
   "bin": {
-    "datamaker-mcp": "./build/index.js"
+    "@automators/datamaker-mcp": "./build/index.js"
   },
   "scripts": {
     "build": "tsc && chmod 755 build/index.js",
-    "dev": "dotenv -e .env -- sh -c 'pnpm dlx @modelcontextprotocol/inspector -e DATAMAKER_URL=\"$DATAMAKER_URL\" -e DATAMAKER_API_KEY=\"$DATAMAKER_API_KEY\" node build/index.js'"
+    "dev": "dotenv -e .env -- sh -c 'pnpm dlx @modelcontextprotocol/inspector -e DATAMAKER_URL=\"$DATAMAKER_URL\" -e DATAMAKER_API_KEY=\"$DATAMAKER_API_KEY\" node build/index.js'",
+    "prepublishOnly": "pnpm build"
   },
   "files": [
     "build"
   ],
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mcp",
+    "datamaker",
+    "synthetic-data",
+    "ai",
+    "model-context-protocol"
+  ],
+  "author": "Automators",
   "license": "ISC",
   "packageManager": "pnpm@10.5.2",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
     "zod": "^3.24.2"
