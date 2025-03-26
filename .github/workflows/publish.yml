@@ -54,6 +54,7 @@ jobs:
         with:
           node-version: 18.x
           registry-url: "https://registry.npmjs.org/"
+          scope: "@automators"
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v2
@@ -63,7 +64,13 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      # Setup .npmrc for publishing
+      - name: Setup .npmrc
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "@automators:registry=https://registry.npmjs.org/" >> ~/.npmrc
+
       - name: Publish to npm
         run: pnpm publish --no-git-checks
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

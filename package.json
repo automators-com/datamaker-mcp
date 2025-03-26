@@ -5,6 +5,7 @@
   "main": "./build/index.js",
   "type": "module",
   "bin": {
+    "datamaker-mcp": "./build/index.js",
     "@automators/datamaker-mcp": "./build/index.js"
   },
   "scripts": {
@@ -26,7 +27,7 @@
     "model-context-protocol"
   ],
   "author": "Automators",
-  "license": "ISC",
+  "license": "MIT",
   "packageManager": "pnpm@10.5.2",
   "engines": {
     "node": ">=18"
@@ -42,6 +43,7 @@
     "typescript": "^5.8.2"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
