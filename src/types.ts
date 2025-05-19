@@ -3,6 +3,16 @@ export interface Connection {
   [key: string]: any;
 }
 
+export interface Endpoint {
+  id: string;
+  name: string;
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  url: string;
+  headers: Record<string, string>;
+  queryParams: Record<string, string>;
+  [key: string]: any;
+}
+
 export interface DataMakerResponse {
   live_data: any[];
 }
