@@ -1,5 +1,11 @@
 # @automators/datamaker-mcp
 
+## 0.1.1
+
+### Patch Changes
+
+- Adjust api endpoints and add JWT support
+
 ## 0.1.0
 
 ### Minor Changes
