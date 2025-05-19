@@ -26,3 +26,24 @@ export async function fetchDM<T>(
 
   return response.json() as Promise<T>;
 }
+
+export async function fetchAPI<T>(
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  body?: any
+): Promise<T> {
+  const response = await fetch(`${DATAMAKER_URL}/api${endpoint}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}

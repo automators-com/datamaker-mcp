@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Template, DataMakerResponse, Connection } from "./types.js";
-import { fetchDM } from "./helpers.js";
+import { fetchAPI, fetchDM } from "./helpers.js";
 
 export function registerTools(server: McpServer) {
   server.tool(
@@ -17,7 +17,7 @@ export function registerTools(server: McpServer) {
     async ({ template_id, quantity }) => {
       try {
         // Get all templates
-        const templates = await fetchDM<Template[]>("/templates");
+        const templates = await fetchAPI<Template[]>("/templates");
 
         // Find the template with the given id
         const template = templates.find((t) => t.id === template_id);
@@ -60,7 +60,7 @@ export function registerTools(server: McpServer) {
 
   server.tool("get_templates", "Get all templates", {}, async () => {
     try {
-      const templates = await fetchDM<Template[]>("/templates");
+      const templates = await fetchAPI<Template[]>("/templates");
       return {
         content: [
           {

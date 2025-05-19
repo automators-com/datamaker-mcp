@@ -28,19 +28,19 @@
   ],
   "author": "Automators",
   "license": "MIT",
-  "packageManager": "pnpm@10.5.2",
+  "packageManager": "pnpm@10.11.0",
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.8.0",
-    "zod": "^3.24.2"
+    "@modelcontextprotocol/sdk": "^1.11.3",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.28.1",
-    "@types/node": "^22.13.13",
+    "@changesets/cli": "^2.29.4",
+    "@types/node": "^22.15.18",
     "dotenv-cli": "^8.0.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   },
   "publishConfig": {
     "access": "public",
