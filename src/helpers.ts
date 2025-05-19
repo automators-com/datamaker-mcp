@@ -1,7 +1,11 @@
 // Environment variables with defaults
 const DATAMAKER_API_KEY = process.env.DATAMAKER_API_KEY;
+const AUTOMATORS_AUTH_JWT = process.env.AUTOMATORS_AUTH_JWT;
 const DATAMAKER_URL =
-  process.env.DATAMAKER_URL ?? "https://cloud.datamaker.app";
+  process.env.DATAMAKER_URL ?? "https://datamaker.dev.automators.com";
+
+const DATAMAKER_API_URL =
+  process.env.DATAMAKER_API_URL ?? `https://datamaker-api.automators.com`;
 
 // Helper function for making DataMaker API requests
 export async function fetchDM<T>(
@@ -32,12 +36,12 @@ export async function fetchAPI<T>(
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: any
 ): Promise<T> {
-  const response = await fetch(`${DATAMAKER_URL}/api${endpoint}`, {
+  const response = await fetch(`${DATAMAKER_API_URL}/${endpoint}`, {
     method,
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${AUTOMATORS_AUTH_JWT}`,
     },
-    credentials: "include",
     body: body ? JSON.stringify(body) : undefined,
   });
 
