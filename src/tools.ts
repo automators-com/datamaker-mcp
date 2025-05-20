@@ -146,14 +146,11 @@ export function registerTools(server: McpServer) {
         const endpoint = await fetchAPI<Endpoint>(`/endpoints/${endpoint_id}`);
 
         // export the data
-        const response = await fetchAPI<DataMakerResponse>(
-          endpoint.url,
-          endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-          {
-            headers: endpoint.headers,
-            body: data,
-          }
-        );
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+          headers: endpoint.headers,
+          body: JSON.stringify(data),
+        });
 
         return {
           content: [

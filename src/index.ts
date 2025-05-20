@@ -11,33 +11,15 @@ const server = new McpServer({
   name: "DataMaker",
   version: "1.0.0",
   capabilities: {
-    resources: {
-      "datamaker://templates": {
-        description: "Get all templates",
-      },
-      "datamaker://templates/{template_id}": {
-        description: "Get a template by ID",
-        parameters: {
-          template_id: z.string().describe("Template ID"),
-        },
-      },
-      "datamaker://connections": {
-        description: "Get all connections",
-      },
-      "datamaker://connections/{connection_id}": {
-        description: "Get a connection by ID",
-        parameters: {
-          connection_id: z.string().describe("Connection ID"),
-        },
-      },
-    },
+    resources: {},
     tools: {},
   },
 });
 
 // Register all tools and resources
 registerTools(server);
-registerResources(server);
+// TODO: Resources are not something that is used as yet
+// registerResources(server);
 
 async function main() {
   const transport = new StdioServerTransport();

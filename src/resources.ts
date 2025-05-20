@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Template } from "./types.js";
-import { fetchDM } from "./helpers.js";
+import { Connection, Template } from "./types.js";
+import { fetchAPI } from "./helpers.js";
 
 export function registerResources(server: McpServer) {
   server.resource(
@@ -11,7 +11,7 @@ export function registerResources(server: McpServer) {
     },
     async (url: URL) => {
       try {
-        const templates = await fetchDM<Template[]>("/templates");
+        const templates = await fetchAPI<Template[]>("/templates");
         return {
           contents: [
             {
@@ -45,7 +45,7 @@ export function registerResources(server: McpServer) {
     },
     async (url: URL) => {
       try {
-        const connections = await fetchDM<any[]>("/connections");
+        const connections = await fetchAPI<Connection[]>("/connections");
         return {
           contents: [
             {
