@@ -2,9 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 import { registerTools } from "./tools.js";
-import { registerResources } from "./resources.js";
 
 // Create server instance
 const server = new McpServer({
@@ -18,8 +16,6 @@ const server = new McpServer({
 
 // Register all tools and resources
 registerTools(server);
-// TODO: Resources are not something that is used as yet
-// registerResources(server);
 
 async function main() {
   const transport = new StdioServerTransport();
