@@ -1,5 +1,11 @@
 # @automators/datamaker-mcp
 
+## 0.2.1
+
+### Patch Changes
+
+- Add descriminated union type to generate from template
+
 ## 0.2.0
 
 ### Minor Changes

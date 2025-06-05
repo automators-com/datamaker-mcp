@@ -2,6 +2,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Template, DataMakerResponse, Connection, Endpoint } from "./types.js";
 import { fetchAPI, fetchDM } from "./helpers.js";
+import { DataMakerFieldsSchema } from "./fieldSchema.js";
 
 export function registerTools(server: McpServer) {
   server.tool(
@@ -179,7 +180,9 @@ export function registerTools(server: McpServer) {
     "generate_from_template",
     "Generate data from a datamaker template.",
     {
-      fields: z.any().describe("Fields for the datamaker template"),
+      fields: DataMakerFieldsSchema.describe(
+        "Fields for the datamaker template"
+      ),
       quantity: z
         .number()
         .default(10)
