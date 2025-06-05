@@ -174,4 +174,98 @@ export function registerTools(server: McpServer) {
       }
     }
   );
+
+  server.tool(
+    "generate_from_template",
+    "Generate data from a datamaker template.",
+    {
+      fields: z.any().describe("Fields for the datamaker template"),
+      quantity: z
+        .number()
+        .default(10)
+        .describe("Number of records to generate"),
+    },
+    async ({ fields, quantity }) => {
+      try {
+        const response = await fetchDM<DataMakerResponse>(
+          "/datamaker",
+          "POST",
+          { fields, quantity }
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response.live_data ?? response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "flatten_json",
+    "Flatten a nested JSON object so that nested keys are joined by dots (e.g., {user: {name: 'John Doe'}} becomes {'user.name': 'John Doe'}).",
+    {
+      data: z.any().describe("The nested JSON object to flatten"),
+    },
+    async ({ data }) => {
+      function flatten(
+        obj: Record<string, any>,
+        prefix = "",
+        res: Record<string, any> = {}
+      ): Record<string, any> {
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const value = obj[key];
+            const newKey = prefix ? `${prefix}.${key}` : key;
+            if (
+              typeof value === "object" &&
+              value !== null &&
+              !Array.isArray(value)
+            ) {
+              flatten(value, newKey, res);
+            } else {
+              res[newKey] = value;
+            }
+          }
+        }
+        return res;
+      }
+      try {
+        const flattened = flatten(data);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(flattened, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 }

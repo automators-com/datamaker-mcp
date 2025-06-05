@@ -1,5 +1,11 @@
 # @automators/datamaker-mcp
 
+## 0.2.0
+
+### Minor Changes
+
+- Add tools to generate from template and flatten json
+
 ## 0.1.2
 
 ### Patch Changes
