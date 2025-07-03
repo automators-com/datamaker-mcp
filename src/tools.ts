@@ -177,6 +177,44 @@ export function registerTools(server: McpServer) {
   );
 
   server.tool(
+    "fetch_from_endpoint",
+    "Fetch data from one of the user defined endpoints from datamaker.",
+    {
+      endpoint_id: z.string().describe("A valid endpoint id"),
+    },
+    async ({ endpoint_id }) => {
+      try {
+        const endpoint = await fetchAPI<Endpoint>(`/endpoints/${endpoint_id}`);
+
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+          headers: endpoint.headers,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response.json(), null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
     "generate_from_template",
     "Generate data from a datamaker template.",
     {
