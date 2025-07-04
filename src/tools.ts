@@ -190,11 +190,13 @@ export function registerTools(server: McpServer) {
           headers: endpoint.headers,
         });
 
+        const data = await response.json();
+
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(response.json(), null, 2),
+              text: JSON.stringify(data, null, 2),
             },
           ],
         };
