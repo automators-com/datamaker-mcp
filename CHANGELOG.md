@@ -1,6 +1,6 @@
 # @automators/datamaker-mcp
 
-## 0.2.3
+## 0.2.6
 
 ### Patch Changes
 

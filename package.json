@@ -1,6 +1,6 @@
 {
   "name": "@automators/datamaker-mcp",
-  "version": "0.2.3",
+  "version": "0.2.6",
   "description": "The Automators DataMaker MCP server.",
   "main": "./build/index.js",
   "type": "module",
