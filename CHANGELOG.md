@@ -1,5 +1,11 @@
 # @automators/datamaker-mcp
 
+## 0.2.3
+
+### Patch Changes
+
+- Update datamaker endpoint
+
 ## 0.2.1
 
 ### Patch Changes
