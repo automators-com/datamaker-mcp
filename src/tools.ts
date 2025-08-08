@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Template, DataMakerResponse, Connection, Endpoint } from "./types.js";
-import { fetchAPI, fetchDM } from "./helpers.js";
+import { fetchAPI } from "./helpers.js";
 import { DataMakerFieldsSchema } from "./fieldSchema.js";
 
 export function registerTools(server: McpServer) {
@@ -27,7 +27,7 @@ export function registerTools(server: McpServer) {
         }
 
         // Generate data from the template
-        const response = await fetchDM<DataMakerResponse>(
+        const response = await fetchAPI<DataMakerResponse>(
           "/datamaker",
           "POST",
           {
@@ -228,7 +228,7 @@ export function registerTools(server: McpServer) {
     },
     async ({ fields, quantity }) => {
       try {
-        const response = await fetchDM<DataMakerResponse>(
+        const response = await fetchAPI<DataMakerResponse>(
           "/datamaker",
           "POST",
           { fields, quantity }
