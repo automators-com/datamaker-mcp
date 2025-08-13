@@ -3,10 +3,12 @@ import { config } from "dotenv";
 config();
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPTransport } from "@hono/mcp";
-import { Hono } from "hono";
+import {  Hono } from "hono";
 import { HttpBindings, serve } from "@hono/node-server";
-
 import { registerTools } from "./tools.js";
+import { jwtMiddleware } from "./middleware.js";
+import { injectHonoVar } from "./helpers.js";
+
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8001;
 // Create server instance
@@ -19,14 +21,27 @@ const mcpServer = new McpServer({
   },
 });
 
+
+let lastJwtToken: string | undefined;
+
+injectHonoVar(mcpServer, () => lastJwtToken);
 // Register all tools and resources
 registerTools(mcpServer);
 
-const app = new Hono<{ Bindings: HttpBindings }>();
+type AppVariables = {
+  mcpContext?: string;
+};
+
+const app = new Hono<{ Bindings: HttpBindings; Variables: AppVariables }>();
+
+app.use(jwtMiddleware);
 
 app.all("/", async (c) => {
+  lastJwtToken = c.get("mcpContext");
   const transport = new StreamableHTTPTransport();
+
   await mcpServer.connect(transport);
+
   return transport.handleRequest(c);
 });
 
@@ -52,3 +67,6 @@ process.on("SIGTERM", () => {
     process.exit(0);
   });
 });
+
+
+
