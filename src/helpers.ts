@@ -1,8 +1,12 @@
+import { config } from "dotenv";
+config();
+
 // Environment variables with defaults
 const DATAMAKER_API_URL =
   process.env.DATAMAKER_API_URL ?? "https://api.datamaker.dev.automators.com";
 
 const AUTOMATORS_AUTH_JWT = process.env.AUTOMATORS_AUTH_JWT;
+
 
 export async function fetchAPI<T>(
   endpoint: string,
