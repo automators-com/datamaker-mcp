@@ -25,7 +25,7 @@ COPY --chown=hono:nodejs --from=installer /src/build ./build
 COPY --chown=hono:nodejs --from=installer /src/package.json ./package.json
 COPY --chown=hono:nodejs --from=installer /src/pnpm-lock.yaml ./pnpm-lock.yaml
 
-ENV PORT=8000
-EXPOSE 8000
+ENV PORT=8001
+EXPOSE 8001
 
 CMD ["node", "build/index.js"]
