@@ -389,10 +389,9 @@ export function registerTools(server: McpServer) {
         );
 
         // Check if this is a SAP endpoint that requires CSRF token
-        if (isSapEndpoint(endpoint.url)) {
-          
+        if (isSapEndpoint(endpoint?.url)) {
           // First, get the CSRF token from the main DataMaker application
-          const csrfData = await fetchCsrfToken(endpoint.url, ctx?.jwtToken);
+          const csrfData = await fetchCsrfToken(endpoint?.url, endpoint?.headers?.Authorization);
         
           // Prepare headers with CSRF token and cookies for SAP request
           const sapHeaders = createSapHeaders(csrfData);
@@ -402,8 +401,8 @@ export function registerTools(server: McpServer) {
           };
 
           // Fetch data from SAP endpoint
-          const response = await fetch(endpoint.url, {
-            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+          const response = await fetch(endpoint?.url, {
+            method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
             headers: headers,
             credentials: 'include',
           });
@@ -424,9 +423,9 @@ export function registerTools(server: McpServer) {
           };
         } else {         
           // Regular endpoint handling
-          const response = await fetch(endpoint.url, {
-            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-            headers: endpoint.headers,
+          const response = await fetch(endpoint?.url, {
+            method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: endpoint?.headers,
           });
 
           if (!response.ok) {

@@ -93,14 +93,17 @@ export function isSapEndpoint(url: string) {
  * @param jwtToken - The JWT token for the user
  * @returns The CSRF data
  */
-export async function fetchCsrfToken(url: string, jwtToken: string) {
+export async function fetchCsrfToken(url: string, authorization: string) {
   const response = await fetch(`${process.env.DATAMAKER_APP_URL || 'https://datamaker.automators.com'}/api/getCsrfToken`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',      
     },
-  });
+    body: JSON.stringify({
+      sapUrl: url,
+      authorization: authorization || ""
+    }),
+  });  
 
   if (!response.ok) {
     throw new Error(`Failed to get CSRF token: ${response.status}`);
@@ -122,6 +125,7 @@ export async function parseResponseData(response: Response) {
   let responseData;
   try {
     responseData = await response.json();
+    return responseData;
   } catch (parseError) {
     // Try to get text response instead
     const textResponse = await response.text();
