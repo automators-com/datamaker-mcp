@@ -75,11 +75,51 @@ export function registerTools(server: McpServer) {
         undefined,
         ctx?.jwtToken
       );
+
+      const simplifiedTemplateObjects = templates.map((template) => ({
+        id: template.id,
+        name: template.name,
+      }));
+
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(templates, null, 2),
+            text: JSON.stringify(simplifiedTemplateObjects, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          },
+        ],
+      };
+    }
+  });
+
+  server.tool("get_template_by_id", "Get a template by id", {
+    template_id: z.string().describe("A valid datamaker template id"),
+  }, async ({template_id}, context) => {
+    const ctx = context as any;
+    try {
+      const template = await fetchAPI<Template>(
+        `/templates/${template_id}`,
+        "GET",
+        undefined,
+        ctx?.jwtToken
+      );
+              
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(template, null, 2),
           },
         ],
       };
@@ -110,11 +150,17 @@ export function registerTools(server: McpServer) {
           undefined,
           ctx?.jwtToken
         );
+
+        const simplifiedConnectionObjects = connections.map((connection) => ({
+          id: connection.id,
+          name: connection.name,
+        }));
+
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(connections, null, 2),
+              text: JSON.stringify(simplifiedConnectionObjects, null, 2),
             },
           ],
         };
@@ -133,6 +179,42 @@ export function registerTools(server: McpServer) {
     }
   );
 
+  // TODO: Make this available when we have /connections/:id endpoint (currently not implemented)
+
+  // server.tool("get_connection_by_id", "Get a connection by id", {
+  //   connection_id: z.string().describe("A valid datamaker connection id"),
+  // }, async ({connection_id}, context) => {
+  //   const ctx = context as any;
+  //   try {
+  //     const connection = await fetchAPI<Connection>(
+  //       `/connections/${connection_id}`,
+  //       "GET",
+  //       undefined,
+  //       ctx?.jwtToken
+  //     );
+      
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(connection, null, 2),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: `Error: ${
+  //             error instanceof Error ? error.message : "Unknown error"
+  //           }`,
+  //         },
+  //       ],
+  //     };
+  //   }
+  // });
+
   server.tool("get_endpoints", "Get all endpoints", {}, async ({}, context) => {
     const ctx = context as any;
     try {
@@ -142,11 +224,51 @@ export function registerTools(server: McpServer) {
         undefined,
         ctx?.jwtToken
       );
+
+      const simplifiedEndpointObjects = endpoints.map((endpoint) => ({
+        id: endpoint.id,
+        name: endpoint.name,     
+      }));
+
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(endpoints, null, 2),
+            text: JSON.stringify(simplifiedEndpointObjects, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          },
+        ],
+      };
+    }
+  });
+
+  server.tool("get_endpoint_by_id", "Get an endpoint by id", {
+    endpoint_id: z.string().describe("A valid datamaker endpoint id"),
+  }, async ({endpoint_id}, context) => {
+    const ctx = context as any;
+    try {
+      const endpoint = await fetchAPI<Endpoint>(
+        `/endpoints/${endpoint_id}`,
+        "GET",
+        undefined,
+        ctx?.jwtToken
+      );
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(endpoint, null, 2),
           },
         ],
       };
