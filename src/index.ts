@@ -34,8 +34,8 @@ const app = new Hono<{ Bindings: HttpBindings; Variables: AppVariables }>();
 
 app.use(jwtMiddleware);
 
-app.get("/healthcheck", (c) => {
-  return c.text("");
+app.get("/health", (c) => {
+  return new Response("ok", { status: 200 });
 });
 
 app.all("/", async (c) => {
