@@ -6,7 +6,7 @@ import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 import { HttpBindings, serve } from "@hono/node-server";
 import { registerTools } from "./tools.js";
-import { jwtMiddleware } from "./middleware.js";
+import { jwtMiddleware, projectIdMiddleware } from "./middleware.js";
 import { injectHonoVar } from "./helpers.js";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8001;
@@ -21,18 +21,22 @@ const mcpServer = new McpServer({
 });
 
 let lastJwtToken: string | undefined;
+let projectId: string | undefined;
 
-injectHonoVar(mcpServer, () => lastJwtToken);
+injectHonoVar(mcpServer, () => lastJwtToken, () => projectId);
+
 // Register all tools and resources
 registerTools(mcpServer);
 
 type AppVariables = {
   mcpContext?: string;
+  projectId?: string;
 };
 
 const app = new Hono<{ Bindings: HttpBindings; Variables: AppVariables }>();
 
 app.use(jwtMiddleware);
+app.use(projectIdMiddleware);
 
 app.get("/health", (c) => {
   return new Response("ok", { status: 200 });
@@ -40,6 +44,7 @@ app.get("/health", (c) => {
 
 app.all("/", async (c) => {
   lastJwtToken = c.get("mcpContext");
+  projectId = c.get("projectId");
   const transport = new StreamableHTTPTransport();
 
   await mcpServer.connect(transport);

@@ -8,3 +8,9 @@ export const jwtMiddleware = createMiddleware(async (c, next) => {
   }
   await next();
 });
+
+export const projectIdMiddleware = createMiddleware(async (c, next) => {
+  const projectId = c.req.header("x-project-id");
+  c.set("projectId", projectId);
+  await next();
+});

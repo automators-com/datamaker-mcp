@@ -69,16 +69,23 @@ export function registerTools(server: McpServer) {
     }
   );
 
-  server.tool("get_templates", "Get all templates", {}, async ({}, context) => {
-    const ctx = context as any;
-    try {
-      const templates = await fetchAPI<Template[]>(
-        "/templates",
-        "GET",
-        undefined,
-        ctx?.jwtToken
-      );
-
+  server.tool(
+    "get_templates",
+    "Get all templates",
+    {
+      projectId: z.string().optional().describe("A valid datamaker project id"),
+    },
+    async ({ projectId }, context) => {
+      const ctx = context as any;
+      try {
+        const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const templates = await fetchAPI<Template[]>(
+          `/templates${queryParams}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
+  
       const simplifiedTemplateObjects = templates.map((template) => ({
         id: template.id,
         name: template.name,
@@ -119,26 +126,27 @@ export function registerTools(server: McpServer) {
       );
               
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(template, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(template, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
     }
-  });
+  );
 
   server.tool(
     "get_connections",

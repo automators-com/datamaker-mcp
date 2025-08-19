@@ -6,7 +6,6 @@ config();
 const DATAMAKER_API_URL =
   process.env.DATAMAKER_API_URL ?? "https://api.datamaker.dev.automators.com";
 
-
 export async function fetchAPI<T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
@@ -48,11 +47,11 @@ export async function fetchAPI<T>(
   return response.json() as Promise<T>;
 }
 
-
 // Allows the injecting of variables(JWT Token from headers) into MCP tools context
 export function injectHonoVar(
   server: McpServer,
-  getJwt: () => string | undefined
+  getJwt: () => string | undefined,
+  getProjectId?: () => string | undefined
 ) {
   const originalTool = server.tool.bind(server);
 
@@ -68,9 +67,11 @@ export function injectHonoVar(
       paramsSchemaOrAnnotations,
       async (args: any, context: any) => {
         const jwtToken = getJwt(); // from closure
+        const projectId = getProjectId?.(); 
         const extendedContext = {
           ...context,
           jwtToken,
+          projectId,
         };
         return cb(args, extendedContext);
       }
