@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Template, DataMakerResponse, Connection, Endpoint } from "./types.js";
-import { fetchAPI } from "./helpers.js";
+import { createSapHeaders, fetchAPI, fetchCsrfToken, isSapEndpoint, parseResponseData } from "./helpers.js";
 import { DataMakerFieldsSchema } from "./fieldSchema.js";
+import { config } from "dotenv";
+
+config();
 
 export function registerTools(server: McpServer) {
   server.tool(
@@ -302,24 +305,59 @@ export function registerTools(server: McpServer) {
           "GET",
           undefined,
           ctx?.jwtToken
-        );
+        ); 
 
-        // export the data
-        const response = await fetch(endpoint.url, {
-          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-          headers: endpoint.headers,
-          body: JSON.stringify(data),
-        });
+        // Check if this is a SAP endpoint that requires CSRF token
+        if (isSapEndpoint(endpoint.url)) {
+          
+          // First, get the CSRF token from the main DataMaker application
+          const csrfData = await fetchCsrfToken(endpoint.url, ctx?.jwtToken);
+      
+          // Prepare headers with CSRF token and cookies for SAP export request
+          const sapHeaders = createSapHeaders(csrfData);
+          const headers = {
+            ...sapHeaders,
+            "Content-Type": "application/json",
+          };
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(response, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
+          // export the data to SAP endpoint
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: headers,
+            body: JSON.stringify(data),
+            credentials: 'include',
+          });
+
+          if (!response.ok) {
+            throw new Error(`SAP endpoint export HTTP error! status: ${response.status}`);
+          }     
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(response, null, 2),
+              },
+            ],
+          };
+        } else {         
+          // export the data
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: endpoint.headers,
+            body: JSON.stringify(data),
+          });
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(response, null, 2),
+              },
+            ],
+          };
+        }
+      } catch (error) {        
         return {
           content: [
             {
@@ -350,19 +388,62 @@ export function registerTools(server: McpServer) {
           ctx?.jwtToken
         );
 
-        const response = await fetch(endpoint.url, {
-          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-          headers: endpoint.headers,
-        });
+        // Check if this is a SAP endpoint that requires CSRF token
+        if (isSapEndpoint(endpoint.url)) {
+          
+          // First, get the CSRF token from the main DataMaker application
+          const csrfData = await fetchCsrfToken(endpoint.url, ctx?.jwtToken);
+        
+          // Prepare headers with CSRF token and cookies for SAP request
+          const sapHeaders = createSapHeaders(csrfData);
+          const headers = {
+            ...sapHeaders,
+            "Content-Type": "application/json",
+          };
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(response.json(), null, 2),
-            },
-          ],
-        };
+          // Fetch data from SAP endpoint
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: headers,
+            credentials: 'include',
+          });
+
+          if (!response.ok) {
+            throw new Error(`SAP endpoint HTTP error! status: ${response.status}`);
+          }
+
+          const responseData = await parseResponseData(response);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(responseData, null, 2),
+              },
+            ],
+          };
+        } else {         
+          // Regular endpoint handling
+          const response = await fetch(endpoint.url, {
+            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: endpoint.headers,
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const responseData = await parseResponseData(response);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(responseData, null, 2),
+              },
+            ],
+          };
+        }
       } catch (error) {
         return {
           content: [

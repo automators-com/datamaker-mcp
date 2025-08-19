@@ -77,3 +77,70 @@ export function injectHonoVar(
     );
   };
 }
+
+/**
+ * Checks if the endpoint is a SAP endpoint
+ * @param url - The URL of the endpoint
+ * @returns True if the endpoint is a SAP endpoint, false otherwise
+ */
+export function isSapEndpoint(url: string) {
+  return /\/sap\/opu\//.test(url);
+};
+
+/**
+ * Fetches the CSRF token using DataMaker API
+ * @param url - The URL of the SAP endpoint
+ * @param jwtToken - The JWT token for the user
+ * @returns The CSRF data
+ */
+export async function fetchCsrfToken(url: string, jwtToken: string) {
+  const response = await fetch(`${process.env.DATAMAKER_APP_URL || 'https://datamaker.automators.com'}/api/getCsrfToken`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get CSRF token: ${response.status}`);
+  }
+
+  return response.json() as Promise<{
+    csrf_token: string;
+    cookie_name: string;
+    cookie_value: string;
+  }>;
+};
+
+/**
+ * Parses the response data into proper format
+ * @param response - The original response from the endpoint
+ * @returns The response data
+ */
+export async function parseResponseData(response: Response) {
+  let responseData;
+  try {
+    responseData = await response.json();
+  } catch (parseError) {
+    // Try to get text response instead
+    const textResponse = await response.text();
+    throw new Error(`Failed to parse JSON response from SAP endpoint. Raw response: ${textResponse}`);
+  }
+}
+
+/**
+ * Creates SAP headers for the CSRF token and cookie
+ * @param csrfData - The CSRF data from the fetchCsrfToken function
+ * @returns The SAP headers
+ */
+export function createSapHeaders(csrfData: {
+  csrf_token: string;
+  cookie_name: string;
+  cookie_value: string;
+}) {
+  return {
+    "x-csrf-token": csrfData.csrf_token,
+    "Cookie": csrfData.cookie_name + "=" + csrfData.cookie_value,
+  };
+}
