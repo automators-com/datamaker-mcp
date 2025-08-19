@@ -311,7 +311,7 @@ export function registerTools(server: McpServer) {
         if (isSapEndpoint(endpoint.url)) {
           
           // First, get the CSRF token from the main DataMaker application
-          const csrfData = await fetchCsrfToken(endpoint.url, ctx?.jwtToken);
+          const csrfData = await fetchCsrfToken(endpoint.url, endpoint.headers?.Authorization);
       
           // Prepare headers with CSRF token and cookies for SAP export request
           const sapHeaders = createSapHeaders(csrfData);
