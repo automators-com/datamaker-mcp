@@ -123,14 +123,21 @@ export async function fetchCsrfToken(url: string, authorization: string) {
  * @returns The response data
  */
 export async function parseResponseData(response: Response) {
+  // Clone the response so we can read it multiple times if needed
+  const responseClone = response.clone();
+  
   let responseData;
   try {
     responseData = await response.json();
     return responseData;
   } catch (parseError) {
-    // Try to get text response instead
-    const textResponse = await response.text();
-    throw new Error(`Failed to parse JSON response from SAP endpoint. Raw response: ${textResponse}`);
+    // Try to get text response instead from the cloned response
+    try {
+      const textResponse = await responseClone.text();
+      return textResponse;
+    } catch (textError) {
+      throw new Error(`Failed to parse response from endpoint. JSON parse error: ${parseError}, Text parse error: ${textError}`);
+    }
   }
 }
 
