@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc && chmod 755 build/index.js",
     "start": "node build/index.js",
-    "dev": "dotenv -e .env -- sh -c 'pnpm dlx @modelcontextprotocol/inspector -e PORT=\"$PORT\" -e DATAMAKER_URL=\"$DATAMAKER_URL\" -e AUTOMATORS_AUTH_JWT=\"$AUTOMATORS_AUTH_JWT\" -e DATAMAKER_API_URL=\"$DATAMAKER_API_URL\" node build/index.js'",
+    "dev": "dotenv -e .env -- sh -c 'pnpm dlx @modelcontextprotocol/inspector -e PORT=\"$PORT\" -e DATAMAKER_URL=\"$DATAMAKER_URL\" -e AUTOMATORS_AUTH_JWT=\"$AUTOMATORS_AUTH_JWT\" -e DATAMAKER_API_URL=\"$DATAMAKER_API_URL\" -e R2_TOKEN=\"$R2_TOKEN\" -e R2_ACCESS_KEY_ID=\"$R2_ACCESS_KEY_ID\" -e R2_SECRET=\"$R2_SECRET\" -e R2_URL=\"$R2_URL\" -e R2_BUCKET_NAME=\"$R2_BUCKET_NAME\" node build/index.js'",
     "prepublishOnly": "pnpm build",
     "changeset": "changeset",
     "version": "changeset version",
@@ -34,6 +34,8 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.864.0",
+    "@aws-sdk/s3-request-presigner": "3.864.0",
     "@hono/mcp": "0.1.1",
     "@hono/node-server": "1.18.2",
     "@modelcontextprotocol/sdk": "^1.11.3",

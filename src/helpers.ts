@@ -1,10 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { config } from "dotenv";
-config();
+import { s3Client } from "./lib/s3.js";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { ENV } from "./lib/config.js";
 
-// Environment variables with defaults
-const DATAMAKER_API_URL =
-  process.env.DATAMAKER_API_URL ?? "https://api.datamaker.dev.automators.com";
+// Use centralized config
+const DATAMAKER_API_URL = ENV.DATAMAKER_API_URL;
+const S3_BUCKET = ENV.S3_BUCKET_NAME;
 
 export async function fetchAPI<T>(
   endpoint: string,
@@ -45,6 +47,56 @@ export async function fetchAPI<T>(
   }
 
   return response.json() as Promise<T>;
+}
+
+export async function storeToS3AndSummarize(
+  data: any[],
+  prefix: string = "endpoints"
+): Promise<{
+  summary: any[];
+  totalCount: number;
+  s3Key: string;
+  viewUrl: string;
+}> {
+  try {
+    // Generate a unique key for the S3 object
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const s3Key = `${prefix}/${timestamp}.json`;
+
+    const putCommand = new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+      Body: JSON.stringify(data, null, 2),
+      ContentType: "application/json",
+      Metadata: {
+        "total-count": data.length.toString(),
+        "stored-at": timestamp,
+      },
+    });
+
+    await s3Client.send(putCommand);
+
+    const getCommand = new GetObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+    });
+
+    const viewUrl = await getSignedUrl(s3Client, getCommand, {
+      expiresIn: 86400,
+    }); // 24 hours
+
+    return {
+      summary: data.slice(0, 5),
+      totalCount: data.length,
+      s3Key,
+      viewUrl,
+    };
+  } catch (error) {
+    console.error("Error storing data to S3:", error);
+    throw new Error(
+      `Failed to store data to S3: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
 }
 
 // Allows the injecting of variables(JWT Token from headers) into MCP tools context
