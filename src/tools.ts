@@ -35,12 +35,17 @@ export function registerTools(server: McpServer) {
           throw new Error(`Template with id ${template_id} not found`);
         }
 
+        // Filter to ensure inactive fields are not returned
+        const activeFields = template.fields.filter(
+          (field: any) => field.active === undefined || field.active === true
+        );
+
         // Generate data from the template
         const response = await fetchAPI<DataMakerResponse>(
           "/datamaker",
           "POST",
           {
-            fields: template.fields,
+            fields: activeFields,
             quantity,
           },
           ctx?.jwtToken
