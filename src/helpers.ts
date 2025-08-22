@@ -41,7 +41,7 @@ export async function fetchAPI<T>(
         })
       );
     }
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`HTTP error! status: ${response.status}, response: ${errorBody}`);
   }
 
   return response.json() as Promise<T>;
@@ -107,7 +107,8 @@ export async function fetchCsrfToken(url: string, authorization: string) {
   });  
 
   if (!response.ok) {
-    throw new Error(`Failed to get CSRF token: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to get CSRF token: ${response.status}, response: ${errorText}`);
   }
 
   return response.json() as Promise<{

@@ -337,7 +337,8 @@ export function registerTools(server: McpServer) {
           });
 
           if (!response.ok) {
-            throw new Error(`SAP endpoint export HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`);
           }     
 
           return {
@@ -355,6 +356,11 @@ export function registerTools(server: McpServer) {
             headers: endpoint.headers,
             body: JSON.stringify(data),
           });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+          }
 
           return {
             content: [
@@ -416,7 +422,8 @@ export function registerTools(server: McpServer) {
           });
 
           if (!response.ok) {
-            throw new Error(`SAP endpoint HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`SAP endpoint HTTP error! status: ${response.status}, response: ${errorText}`);
           }
 
           const responseData = await parseResponseData(response);
@@ -437,7 +444,8 @@ export function registerTools(server: McpServer) {
           });
 
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
           }
 
           const responseData = await parseResponseData(response);
