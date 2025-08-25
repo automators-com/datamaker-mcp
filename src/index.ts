@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { config } from "dotenv";
-config();
+// Import config first to ensure environment variables are loaded
+import { ENV } from "./lib/config.js";
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
@@ -9,7 +10,7 @@ import { registerTools } from "./tools.js";
 import { jwtMiddleware, projectIdMiddleware } from "./middleware.js";
 import { injectHonoVar } from "./helpers.js";
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 8001;
+const PORT = ENV.PORT;
 // Create server instance
 const mcpServer = new McpServer({
   name: "DataMaker",
