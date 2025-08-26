@@ -343,7 +343,7 @@ export function registerTools(server: McpServer) {
           const sapHeaders = createSapHeaders(csrfData);
           const headers = {
             ...sapHeaders,
-            "Content-Type": "application/json",
+            ...endpoint.headers,
           };
 
           // export the data to SAP endpoint
@@ -357,13 +357,15 @@ export function registerTools(server: McpServer) {
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`);
-          }     
+          }   
+
+          const responseData = await parseResponseData(response);
 
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(response, null, 2),
+                text: JSON.stringify(responseData, null, 2),
               },
             ],
           };
@@ -380,11 +382,13 @@ export function registerTools(server: McpServer) {
             throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
           }
 
+          const responseData = await parseResponseData(response);
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(response, null, 2),
+                text: JSON.stringify(responseData, null, 2),
               },
             ],
           };
