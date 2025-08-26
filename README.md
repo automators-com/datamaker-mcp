@@ -8,6 +8,7 @@ The Automators DataMaker MCP (Model Context Protocol) server provides a seamless
 - Fetch and manage DataMaker templates
 - Fetch and manage DataMaker connections
 - Push data to DataMaker connections
+- **Large dataset handling**: Automatically stores large endpoint datasets to S3 and provides summary with view links
 
 ## 📦 Installation
 
@@ -18,17 +19,13 @@ Add the following to your `mcp.json` file:
   "mcpServers": {
     "datamaker": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@automators/datamaker-mcp"
-      ],
+      "args": ["-y", "@automators/datamaker-mcp"],
       "env": {
         "DATAMAKER_API_KEY": "your-datamaker-api-key"
       }
     }
   }
 }
-
 ```
 
 ## 📋 Prerequisites
@@ -36,16 +33,39 @@ Add the following to your `mcp.json` file:
 - [Node.js](https://nodejs.org/en/download/) (LTS version recommended)
 - [pnpm](https://pnpm.io/) package manager (v10.5.2 or later)
 - A DataMaker account with API access
+- AWS S3 bucket and credentials (for large dataset storage)
 
 ## 🏃‍♂️ Usage
 
+### Large Dataset Handling
+
+The `get_endpoints` tool automatically detects when a large dataset is returned (more than 10 endpoints) and:
+
+1. **Stores the complete dataset** to your configured S3 bucket
+2. **Returns a summary** showing only the first 5 endpoints
+3. **Provides a secure link** to view the complete dataset (expires in 24 hours)
+
+This prevents overwhelming responses while maintaining access to all data.
+
 ### Development Mode
 
-Create a `.env` file in your project root:
+Create a `.env` file in your project root. You can copy from `env.example`:
+
+```bash
+cp env.example .env
+```
+
+Then edit `.env` with your actual values:
 
 ```env
 DATAMAKER_URL="https://dev.datamaker.app"
 DATAMAKER_API_KEY="your-datamaker-api-key"
+
+# S3 Configuration (optional, for large dataset storage)
+S3_BUCKET="your-s3-bucket-name"
+S3_REGION="us-east-1"
+S3_ACCESS_KEY_ID="your-aws-access-key"
+S3_SECRET_ACCESS_KEY="your-aws-secret-key"
 ```
 
 Run the server with the MCP Inspector for debugging:
@@ -55,7 +75,6 @@ pnpm dev
 ```
 
 This will start the MCP server and launch the MCP Inspector interface at `http://localhost:5173`.
-
 
 ## 🔧 Available Scripts
 
@@ -81,6 +100,7 @@ This project uses [Changesets](https://github.com/changesets/changesets) to mana
 7. Create a PR on GitHub
 
 The GitHub Actions workflow will automatically:
+
 - Create a PR with version updates and changelog
 - Publish to npm when the PR is merged
 
@@ -90,4 +110,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-MIT License - See [LICENSE](LICENSE) for details. 
+MIT License - See [LICENSE](LICENSE) for details.

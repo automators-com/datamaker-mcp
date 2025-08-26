@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Template, DataMakerResponse, Connection, Endpoint } from "./types.js";
-import { createSapHeaders, fetchAPI, fetchCsrfToken, isSapEndpoint, parseResponseData } from "./helpers.js";
+import { fetchAPI, storeToS3AndSummarize, isSapEndpoint, fetchCsrfToken, createSapHeaders, parseResponseData } from "./helpers.js";
 import { config } from "dotenv";
 
 config();
@@ -240,10 +240,24 @@ export function registerTools(server: McpServer) {
         ctx?.jwtToken
       );
 
+      if (endpoints.length > 5) {
+        const result = await storeToS3AndSummarize(endpoints, "endpoints");
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Available endpoints (${result.totalCount} endpoints) are too large to show. Showing first 5 endpoints:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all endpoints in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+            },
+          ],
+        };
+      }
+
       const simplifiedEndpointObjects = endpoints.map((endpoint) => ({
         id: endpoint.id,
         name: endpoint.name,     
       }));
+
+      
 
       return {
         content: [
