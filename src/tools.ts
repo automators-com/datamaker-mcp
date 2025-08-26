@@ -1,7 +1,14 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Template, DataMakerResponse, Connection, Endpoint } from "./types.js";
-import { fetchAPI, storeToS3AndSummarize, isSapEndpoint, fetchCsrfToken, createSapHeaders, parseResponseData } from "./helpers.js";
+import {
+  fetchAPI,
+  storeToS3AndSummarize,
+  isSapEndpoint,
+  fetchCsrfToken,
+  createSapHeaders,
+  parseResponseData,
+} from "./helpers.js";
 import { config } from "dotenv";
 
 config();
@@ -89,47 +96,52 @@ export function registerTools(server: McpServer) {
           undefined,
           ctx?.jwtToken
         );
-  
-      const simplifiedTemplateObjects = templates.map((template) => ({
-        id: template.id,
-        name: template.name,
-      }));
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(simplifiedTemplateObjects, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
+        const simplifiedTemplateObjects = templates.map((template) => ({
+          id: template.id,
+          name: template.name,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(simplifiedTemplateObjects, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
     }
-  });
+  );
 
-  server.tool("get_template_by_id", "Get a template by id", {
-    template_id: z.string().describe("A valid datamaker template id"),
-  }, async ({template_id}, context) => {
-    const ctx = context as any;
-    try {
-      const template = await fetchAPI<Template>(
-        `/templates/${template_id}`,
-        "GET",
-        undefined,
-        ctx?.jwtToken
-      );
-              
-      return {
+  server.tool(
+    "get_template_by_id",
+    "Get a template by id",
+    {
+      template_id: z.string().describe("A valid datamaker template id"),
+    },
+    async ({ template_id }, context) => {
+      const ctx = context as any;
+      try {
+        const template = await fetchAPI<Template>(
+          `/templates/${template_id}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
+
+        return {
           content: [
             {
               type: "text",
@@ -207,7 +219,7 @@ export function registerTools(server: McpServer) {
   //       undefined,
   //       ctx?.jwtToken
   //     );
-      
+
   //     return {
   //       content: [
   //         {
@@ -254,10 +266,8 @@ export function registerTools(server: McpServer) {
 
       const simplifiedEndpointObjects = endpoints.map((endpoint) => ({
         id: endpoint.id,
-        name: endpoint.name,     
+        name: endpoint.name,
       }));
-
-      
 
       return {
         content: [
@@ -281,39 +291,44 @@ export function registerTools(server: McpServer) {
     }
   });
 
-  server.tool("get_endpoint_by_id", "Get an endpoint by id", {
-    endpoint_id: z.string().describe("A valid datamaker endpoint id"),
-  }, async ({endpoint_id}, context) => {
-    const ctx = context as any;
-    try {
-      const endpoint = await fetchAPI<Endpoint>(
-        `/endpoints/${endpoint_id}`,
-        "GET",
-        undefined,
-        ctx?.jwtToken
-      );
-      
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(endpoint, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
+  server.tool(
+    "get_endpoint_by_id",
+    "Get an endpoint by id",
+    {
+      endpoint_id: z.string().describe("A valid datamaker endpoint id"),
+    },
+    async ({ endpoint_id }, context) => {
+      const ctx = context as any;
+      try {
+        const endpoint = await fetchAPI<Endpoint>(
+          `/endpoints/${endpoint_id}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(endpoint, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
     }
-  });
+  );
 
   server.tool(
     "export_to_endpoint",
@@ -331,14 +346,16 @@ export function registerTools(server: McpServer) {
           "GET",
           undefined,
           ctx?.jwtToken
-        ); 
+        );
 
         // Check if this is a SAP endpoint that requires CSRF token
         if (isSapEndpoint(endpoint.url)) {
-          
           // First, get the CSRF token from the main DataMaker application
-          const csrfData = await fetchCsrfToken(endpoint.url, endpoint.headers?.Authorization);
-      
+          const csrfData = await fetchCsrfToken(
+            endpoint.url,
+            endpoint.headers?.Authorization
+          );
+
           // Prepare headers with CSRF token and cookies for SAP export request
           const sapHeaders = createSapHeaders(csrfData);
           const headers = {
@@ -351,13 +368,15 @@ export function registerTools(server: McpServer) {
             method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
             headers: headers,
             body: JSON.stringify(data),
-            credentials: 'include',
+            credentials: "include",
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`);
-          }   
+            throw new Error(
+              `SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`
+            );
+          }
 
           const responseData = await parseResponseData(response);
 
@@ -369,7 +388,7 @@ export function registerTools(server: McpServer) {
               },
             ],
           };
-        } else {         
+        } else {
           // export the data
           const response = await fetch(endpoint.url, {
             method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
@@ -379,7 +398,9 @@ export function registerTools(server: McpServer) {
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+            throw new Error(
+              `HTTP error! status: ${response.status}, response: ${errorText}`
+            );
           }
 
           const responseData = await parseResponseData(response);
@@ -393,7 +414,7 @@ export function registerTools(server: McpServer) {
             ],
           };
         }
-      } catch (error) {        
+      } catch (error) {
         return {
           content: [
             {
@@ -424,27 +445,70 @@ export function registerTools(server: McpServer) {
           ctx?.jwtToken
         );
 
-        // Fetch data from endpoint
-        const response = await fetch(endpoint?.url, {
-          method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
-          headers: endpoint?.headers,
-        });
+        // Check if this is a SAP endpoint
+        let targetUrl = endpoint?.url;
+        if (isSapEndpoint(endpoint?.url)) {
+          // For SAP endpoints, append filter to return only first 20 records
+          const separator = targetUrl.includes("?") ? "&" : "?";
+          targetUrl = `${targetUrl}${separator}$filter=top 20`;
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+          const csrfData = await fetchCsrfToken(
+            endpoint.url,
+            endpoint.headers?.Authorization
+          );
+          // Prepare headers with CSRF token and cookies for SAP export request
+          const sapHeaders = createSapHeaders(csrfData);
+          const headers = {
+            ...sapHeaders,
+            ...endpoint.headers,
+          };
+          const response = await fetch(targetUrl, {
+            method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: headers,
+            credentials: "include",
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`
+            );
+          }
+
+          const responseData = await parseResponseData(response);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(responseData, null, 2),
+              },
+            ],
+          };
+        } else {
+          const response = await fetch(targetUrl, {
+            method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
+            headers: endpoint?.headers,
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `HTTP error! status: ${response.status}, response: ${errorText}`
+            );
+          }
+
+          const responseData = await parseResponseData(response);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(responseData, null, 2),
+              },
+            ],
+          };
         }
-
-        const responseData = await parseResponseData(response);
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(responseData, null, 2),
-            },
-          ],
-        };
       } catch (error) {
         return {
           content: [
