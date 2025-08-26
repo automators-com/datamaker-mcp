@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { s3Client } from "./lib/s3.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { DOMParser } from "xmldom";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { ENV } from "./lib/config.js";
 
@@ -43,7 +44,9 @@ export async function fetchAPI<T>(
         })
       );
     }
-    throw new Error(`HTTP error! status: ${response.status}, response: ${errorBody}`);
+    throw new Error(
+      `HTTP error! status: ${response.status}, response: ${errorBody}`
+    );
   }
 
   return response.json() as Promise<T>;
@@ -119,7 +122,7 @@ export function injectHonoVar(
       paramsSchemaOrAnnotations,
       async (args: any, context: any) => {
         const jwtToken = getJwt(); // from closure
-        const projectId = getProjectId?.(); 
+        const projectId = getProjectId?.();
         const extendedContext = {
           ...context,
           jwtToken,
@@ -138,7 +141,7 @@ export function injectHonoVar(
  */
 export function isSapEndpoint(url: string) {
   return /\/sap\/opu\//.test(url);
-};
+}
 
 /**
  * Fetches the CSRF token using DataMaker API
@@ -147,20 +150,25 @@ export function isSapEndpoint(url: string) {
  * @returns The CSRF data
  */
 export async function fetchCsrfToken(url: string, authorization: string) {
-  const response = await fetch(`${process.env.DATAMAKER_APP_URL || 'https://datamaker.automators.com'}/api/getCsrfToken`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',      
-    },
-    body: JSON.stringify({
-      sapUrl: url,
-      authorization: authorization || ""
-    }),
-  });  
+  const response = await fetch(
+    `${process.env.DATAMAKER_APP_URL || "https://datamaker.automators.com"}/api/getCsrfToken`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sapUrl: url,
+        authorization: authorization || "",
+      }),
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to get CSRF token: ${response.status}, response: ${errorText}`);
+    throw new Error(
+      `Failed to get CSRF token: ${response.status}, response: ${errorText}`
+    );
   }
 
   return response.json() as Promise<{
@@ -168,7 +176,7 @@ export async function fetchCsrfToken(url: string, authorization: string) {
     cookie_name: string;
     cookie_value: string;
   }>;
-};
+}
 
 /**
  * Parses the response data into proper format
@@ -178,7 +186,7 @@ export async function fetchCsrfToken(url: string, authorization: string) {
 export async function parseResponseData(response: Response) {
   // Clone the response so we can read it multiple times if needed
   const responseClone = response.clone();
-  
+
   let responseData;
   try {
     responseData = await response.json();
@@ -189,7 +197,9 @@ export async function parseResponseData(response: Response) {
       const textResponse = await responseClone.text();
       return textResponse;
     } catch (textError) {
-      throw new Error(`Failed to parse response from endpoint. JSON parse error: ${parseError}, Text parse error: ${textError}`);
+      throw new Error(
+        `Failed to parse response from endpoint. JSON parse error: ${parseError}, Text parse error: ${textError}`
+      );
     }
   }
 }
@@ -206,6 +216,40 @@ export function createSapHeaders(csrfData: {
 }) {
   return {
     "x-csrf-token": csrfData.csrf_token,
-    "Cookie": csrfData.cookie_name + "=" + csrfData.cookie_value,
+    Cookie: csrfData.cookie_name + "=" + csrfData.cookie_value,
   };
+}
+
+/**
+ * Prepares SAP endpoint for metadata fetching
+ * @param url - The URL of the SAP endpoint
+ * @returns The URL for metadata fetching
+ */
+export function buildMetadataUrl(serviceUrl: string): string {
+  const trimmed = serviceUrl.replace(/\/+$/, "");
+  // If ends with an entity set (like /A_BusinessPartner), replace it
+  if (/\/A_BusinessPartner$/i.test(trimmed)) {
+    return trimmed.replace(/\/A_BusinessPartner$/i, "/$metadata");
+  }
+  return `${trimmed}/$metadata`;
+}
+
+/**
+ * Extracts entity names from an OData $metadata XML.
+ * @param metadataXml - The raw OData $metadata XML string returned from SAP.
+ * @returns A promise that resolves to an array of entity names.
+ */
+export async function extractEntityProperties(
+  metadataXml: string
+): Promise<string[]> {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(metadataXml, "application/xml");
+
+  // Get all EntitySet nodes to find available entities
+  const entitySetNodes = Array.from(xmlDoc.getElementsByTagName("EntitySet"));
+  const entities = entitySetNodes.map(
+    (node) => node.getAttribute("Name") || ""
+  );
+
+  return entities.filter(Boolean);
 }

@@ -8,6 +8,8 @@ import {
   fetchCsrfToken,
   createSapHeaders,
   parseResponseData,
+  buildMetadataUrl,
+  extractEntityProperties,
 } from "./helpers.js";
 import { config } from "dotenv";
 
@@ -448,10 +450,7 @@ export function registerTools(server: McpServer) {
         // Check if this is a SAP endpoint
         let targetUrl = endpoint?.url;
         if (isSapEndpoint(endpoint?.url)) {
-          // For SAP endpoints, append filter to return only first 20 records
-          const separator = targetUrl.includes("?") ? "&" : "?";
-          targetUrl = `${targetUrl}${separator}$filter=top 20`;
-
+          console.log("inside SAP endpoint");
           const csrfData = await fetchCsrfToken(
             endpoint.url,
             endpoint.headers?.Authorization
@@ -462,6 +461,35 @@ export function registerTools(server: McpServer) {
             ...sapHeaders,
             ...endpoint.headers,
           };
+
+          const metadataUrl = buildMetadataUrl(targetUrl);
+
+          // Fetch metadata to get entity information
+          const metadataResponse = await fetch(metadataUrl, {
+            method: "GET",
+            headers: headers,
+            credentials: "include",
+          });
+
+          if (!metadataResponse.ok) {
+            throw new Error(
+              `Failed to fetch metadata: ${metadataResponse.status}`
+            );
+          }
+
+          const metadataText = await metadataResponse.text();
+          console.log(JSON.stringify(metadataText, null, 2));
+
+          const fields = await extractEntityProperties(metadataText);
+
+          console.log("Available fields:", fields);
+
+          // Limit entities to first 20 for OData $select
+          const selectClause = fields.slice(0, 20).join(",");
+
+          const separator = targetUrl.includes("?") ? "&" : "?";
+          targetUrl = `${targetUrl}${separator}?$select=${selectClause}&$top=20`;
+
           const response = await fetch(targetUrl, {
             method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
             headers: headers,
