@@ -310,20 +310,36 @@ export function registerTools(server: McpServer) {
     },
     async ({ endpoint_id, data }, context) => {
       const ctx = context as any;
+      console.log(`[export_to_endpoint] Starting export to endpoint_id: ${endpoint_id}`);
+      console.log(`[export_to_endpoint] Data to export:`, JSON.stringify(data, null, 2));
+      
       try {
         // get the endpoint info
+        console.log(`[export_to_endpoint] Fetching endpoint info for ID: ${endpoint_id}`);
         const endpoint = await fetchAPI<Endpoint>(
           `/endpoints/${endpoint_id}`,
           "GET",
           undefined,
           ctx?.jwtToken
         ); 
+        console.log(`[export_to_endpoint] Endpoint info retrieved:`, {
+          url: endpoint.url,
+          method: endpoint.method,
+          hasHeaders: !!endpoint.headers,
+          headers: endpoint.headers
+        });
 
         // Check if this is a SAP endpoint that requires CSRF token
         if (isSapEndpoint(endpoint.url)) {
+          console.log(`[export_to_endpoint] Detected SAP endpoint: ${endpoint.url}`);
           
           // First, get the CSRF token from the main DataMaker application
+          console.log(`[export_to_endpoint] Fetching CSRF token for SAP endpoint`);
           const csrfData = await fetchCsrfToken(endpoint.url, endpoint.headers?.Authorization);
+          console.log(`[export_to_endpoint] CSRF token retrieved:`, {
+            hasToken: !!csrfData.csrf_token,
+            hasCookies: !!(csrfData.cookie_name && csrfData.cookie_value)
+          });
       
           // Prepare headers with CSRF token and cookies for SAP export request
           const sapHeaders = createSapHeaders(csrfData);
@@ -331,8 +347,13 @@ export function registerTools(server: McpServer) {
             ...sapHeaders,
             "Content-Type": "application/json",
           };
+          console.log(`[export_to_endpoint] SAP headers prepared:`, headers);
 
           // export the data to SAP endpoint
+          console.log(`[export_to_endpoint] Making SAP export request to: ${endpoint.url}`);
+          console.log(`[export_to_endpoint] Request method: ${endpoint.method}`);
+          console.log(`[export_to_endpoint] Request body:`, JSON.stringify(data, null, 2));
+          
           const response = await fetch(endpoint.url, {
             method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
             headers: headers,
@@ -340,20 +361,42 @@ export function registerTools(server: McpServer) {
             credentials: 'include',
           });
 
+          console.log(`[export_to_endpoint] SAP response received:`, {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries())
+          });
+
           if (!response.ok) {
             const errorText = await response.text();
+            console.error(`[export_to_endpoint] SAP endpoint export HTTP error:`, {
+              status: response.status,
+              statusText: response.statusText,
+              errorText
+            });
             throw new Error(`SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`);
           }     
 
+          // Extract response data
+          const responseText = await response.text();
+          console.log(`[export_to_endpoint] SAP response body:`, responseText);
+          
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(response, null, 2),
+                text: `SAP Export Successful!\nStatus: ${response.status}\nResponse: ${responseText}`,
               },
             ],
           };
         } else {         
+          console.log(`[export_to_endpoint] Standard endpoint detected: ${endpoint.url}`);
+          console.log(`[export_to_endpoint] Making standard export request to: ${endpoint.url}`);
+          console.log(`[export_to_endpoint] Request method: ${endpoint.method}`);
+          console.log(`[export_to_endpoint] Request headers:`, endpoint.headers);
+          console.log(`[export_to_endpoint] Request body:`, JSON.stringify(data, null, 2));
+          
           // export the data
           const response = await fetch(endpoint.url, {
             method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
@@ -361,21 +404,38 @@ export function registerTools(server: McpServer) {
             body: JSON.stringify(data),
           });
 
+          console.log(`[export_to_endpoint] Standard response received:`, {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries())
+          });
+
           if (!response.ok) {
             const errorText = await response.text();
+            console.error(`[export_to_endpoint] Standard endpoint HTTP error:`, {
+              status: response.status,
+              statusText: response.statusText,
+              errorText
+            });
             throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
           }
 
+          // Extract response data
+          const responseText = await response.text();
+          console.log(`[export_to_endpoint] Standard response body:`, responseText);
+          
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(response, null, 2),
+                text: `Export Successful!\nStatus: ${response.status}\nResponse: ${responseText}`,
               },
             ],
           };
         }
       } catch (error) {        
+        console.error(`[export_to_endpoint] Error occurred:`, error);
         return {
           content: [
             {
