@@ -436,8 +436,9 @@ export function registerTools(server: McpServer) {
     "Fetch data from one of the user defined endpoints from datamaker.",
     {
       endpoint_id: z.string().describe("A valid endpoint id"),
+      filter: z.object({}).catchall(z.string()).describe("Filter object with string key-value pairs").optional(),
     },
-    async ({ endpoint_id }, context) => {
+    async ({ endpoint_id, filter }, context) => {
       const ctx = context as any;
       try {
         const endpoint = await fetchAPI<Endpoint>(
@@ -450,45 +451,46 @@ export function registerTools(server: McpServer) {
         // Check if this is a SAP endpoint
         let targetUrl = endpoint?.url;
         if (isSapEndpoint(endpoint?.url)) {
-          console.log("inside SAP endpoint");
-          const csrfData = await fetchCsrfToken(
-            endpoint.url,
-            endpoint.headers?.Authorization
-          );
-          // Prepare headers with CSRF token and cookies for SAP export request
-          const sapHeaders = createSapHeaders(csrfData);
-          const headers = {
-            ...sapHeaders,
-            ...endpoint.headers,
-          };
+          const itemsLimit = 20;
+          const headers = endpoint.headers;
 
-          const metadataUrl = buildMetadataUrl(targetUrl);
+          // const metadataUrl = buildMetadataUrl(targetUrl);
+          // console.log("metadataUrl", metadataUrl);
 
-          // Fetch metadata to get entity information
-          const metadataResponse = await fetch(metadataUrl, {
-            method: "GET",
-            headers: headers,
-            credentials: "include",
-          });
+          // // Fetch metadata to get entity information
+          // // Override Accept header for metadata request since it returns XML, not JSON
+          // const metadataHeaders = { ...headers };
+          // metadataHeaders["Accept"] = "application/xml, text/xml, */*";
+          
+          // const metadataResponse = await fetch(metadataUrl, {
+          //   method: "GET",
+          //   headers: metadataHeaders,
+          //   credentials: "include",
+          // });
 
-          if (!metadataResponse.ok) {
-            throw new Error(
-              `Failed to fetch metadata: ${metadataResponse.status}`
-            );
-          }
+          // console.log("metadataResponse", metadataResponse);
+          
 
-          const metadataText = await metadataResponse.text();
-          console.log(JSON.stringify(metadataText, null, 2));
+          // if (!metadataResponse.ok) {
+          //   throw new Error(
+          //     `Failed to fetch metadata: ${metadataResponse.status}, ${await metadataResponse.text()}`
+          //   );
+          // }
 
-          const fields = await extractEntityProperties(metadataText);
+          // const metadataText = await metadataResponse.text();
+          // console.log(JSON.stringify(metadataText, null, 2));
 
-          console.log("Available fields:", fields);
+          // const fields = await extractEntityProperties(metadataText);
+
+          // console.log("Available fields:", fields);
 
           // Limit entities to first 20 for OData $select
-          const selectClause = fields.slice(0, 20).join(",");
+          //const selectClause = fields.slice(0, 20).join(",");
+          const filterClause = filter ? `&$filter=BusinessPartnerName eq '${Object.values(filter)[0]}'` : "";
 
           const separator = targetUrl.includes("?") ? "&" : "?";
-          targetUrl = `${targetUrl}${separator}?$select=${selectClause}&$top=20`;
+          targetUrl = `${targetUrl}${separator}$top=${itemsLimit}${filterClause}`;
+          //targetUrl = `${targetUrl}?$top=${itemsLimit}`;          
 
           const response = await fetch(targetUrl, {
             method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
@@ -503,7 +505,7 @@ export function registerTools(server: McpServer) {
             );
           }
 
-          const responseData = await parseResponseData(response);
+          const responseData = await parseResponseData(response);          
 
           return {
             content: [
