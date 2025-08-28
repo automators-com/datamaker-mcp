@@ -436,7 +436,7 @@ export function registerTools(server: McpServer) {
     "Fetch data from one of the user defined endpoints from datamaker.",
     {
       endpoint_id: z.string().describe("A valid endpoint id"),
-      filter: z.object({}).catchall(z.string()).describe("Filter object with string key-value pairs").optional(),
+      filter: z.any().optional().describe("Filter object with field names as keys and objects with value and operator properties"),
     },
     async ({ endpoint_id, filter }, context) => {
       const ctx = context as any;
@@ -454,43 +454,18 @@ export function registerTools(server: McpServer) {
           const itemsLimit = 20;
           const headers = endpoint.headers;
 
-          // const metadataUrl = buildMetadataUrl(targetUrl);
-          // console.log("metadataUrl", metadataUrl);
-
-          // // Fetch metadata to get entity information
-          // // Override Accept header for metadata request since it returns XML, not JSON
-          // const metadataHeaders = { ...headers };
-          // metadataHeaders["Accept"] = "application/xml, text/xml, */*";
-          
-          // const metadataResponse = await fetch(metadataUrl, {
-          //   method: "GET",
-          //   headers: metadataHeaders,
-          //   credentials: "include",
-          // });
-
-          // console.log("metadataResponse", metadataResponse);
-          
-
-          // if (!metadataResponse.ok) {
-          //   throw new Error(
-          //     `Failed to fetch metadata: ${metadataResponse.status}, ${await metadataResponse.text()}`
-          //   );
-          // }
-
-          // const metadataText = await metadataResponse.text();
-          // console.log(JSON.stringify(metadataText, null, 2));
-
-          // const fields = await extractEntityProperties(metadataText);
-
-          // console.log("Available fields:", fields);
-
-          // Limit entities to first 20 for OData $select
-          //const selectClause = fields.slice(0, 20).join(",");
-          const filterClause = filter ? `&$filter=BusinessPartnerName eq '${Object.values(filter)[0]}'` : "";
+          // Construct dynamic filter clause for all field-operator-value combinations
+          let filterClause = "";
+          if (filter && Object.keys(filter).length > 0) {
+            const filterConditions = Object.entries(filter).map(([fieldName, filterObj]) => {
+              const { value, operator } = filterObj as { value: string; operator: string };
+              return `${fieldName} ${operator} '${value}'`;
+            });
+            filterClause = `&$filter=${filterConditions.join(' and ')}`;
+          }
 
           const separator = targetUrl.includes("?") ? "&" : "?";
-          targetUrl = `${targetUrl}${separator}$top=${itemsLimit}${filterClause}`;
-          //targetUrl = `${targetUrl}?$top=${itemsLimit}`;          
+          targetUrl = `${targetUrl}${separator}$top=${itemsLimit}${filterClause}`;          
 
           const response = await fetch(targetUrl, {
             method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
