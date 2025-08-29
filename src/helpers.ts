@@ -156,6 +156,7 @@ export async function fetchCsrfToken(url: string, authorization: string) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "credentials": "include",
       },
       body: JSON.stringify({
         sapUrl: url,
