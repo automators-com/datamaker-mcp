@@ -151,7 +151,7 @@ export function isSapEndpoint(url: string) {
  */
 export async function fetchCsrfToken(url: string, authorization: string) {
   const response = await fetch(
-    `${process.env.DATAMAKER_APP_URL || "https://datamaker.automators.com"}/api/getCsrfToken`,
+    `${DATAMAKER_API_URL}/getcsrftoken`,
     {
       method: "POST",
       headers: {
