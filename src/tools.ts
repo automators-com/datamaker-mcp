@@ -10,10 +10,14 @@ import {
   parseResponseData,
   buildMetadataUrl,
   extractEntityProperties,
+  countTokens,
+  convertToObjectArray,
 } from "./helpers.js";
 import { config } from "dotenv";
+import { RESPONSE_TOKEN_THRESHOLD } from "./lib/config.js";
 
 config();
+const tokenThreshold = RESPONSE_TOKEN_THRESHOLD;
 
 export function registerTools(server: McpServer) {
   server.tool(
@@ -98,6 +102,20 @@ export function registerTools(server: McpServer) {
           undefined,
           ctx?.jwtToken
         );
+
+        const tokens = countTokens(JSON.stringify(templates, null, 2));
+
+        if (tokens > tokenThreshold) {
+          const result = await storeToS3AndSummarize(templates, "templates");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Available templates (${result.totalCount} templates) are too large to show. Showing first ${result.summary.length} templates:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all templates in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+              },
+            ],
+          };
+        }
 
         const simplifiedTemplateObjects = templates.map((template) => ({
           id: template.id,
@@ -253,14 +271,15 @@ export function registerTools(server: McpServer) {
         undefined,
         ctx?.jwtToken
       );
+      const tokens = countTokens(JSON.stringify(endpoints, null, 2));
 
-      if (endpoints.length > 5) {
+      if (tokens > tokenThreshold) {
         const result = await storeToS3AndSummarize(endpoints, "endpoints");
         return {
           content: [
             {
               type: "text",
-              text: `Available endpoints (${result.totalCount} endpoints) are too large to show. Showing first 5 endpoints:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all endpoints in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+              text: `Available endpoints (${result.totalCount} endpoints) are too large to show. Showing first ${result.summary.length} endpoints:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all endpoints in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
             },
           ],
         };
@@ -465,7 +484,7 @@ export function registerTools(server: McpServer) {
           }
 
           const separator = targetUrl.includes("?") ? "&" : "?";
-          targetUrl = `${targetUrl}${separator}$top=${itemsLimit}${filterClause}`;          
+          targetUrl = `${targetUrl}${separator}${filterClause}`;          
 
           const response = await fetch(targetUrl, {
             method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
@@ -481,6 +500,21 @@ export function registerTools(server: McpServer) {
           }
 
           const responseData = await parseResponseData(response);          
+          const tokens = countTokens(JSON.stringify(responseData, null, 2));
+
+          if (tokens > tokenThreshold) {
+            // Convert the response data to an array of objects for S3 storage
+            const objectArray = convertToObjectArray(responseData);
+            const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Response data (${result.totalCount} items) is too large to show. Showing first ${result.summary.length} items:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+                },
+              ],
+            };
+          }          
 
           return {
             content: [
@@ -504,6 +538,21 @@ export function registerTools(server: McpServer) {
           }
 
           const responseData = await parseResponseData(response);
+
+          const tokens = countTokens(JSON.stringify(responseData, null, 2));
+          if (tokens > tokenThreshold) {
+            // Convert the response data to an array of objects for S3 storage
+            const objectArray = convertToObjectArray(responseData);
+            const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Response data (${result.totalCount} items) is too large to show. Showing first ${result.summary.length} items:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+                },
+              ],
+            };
+          }
 
           return {
             content: [
