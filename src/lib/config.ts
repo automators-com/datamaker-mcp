@@ -10,3 +10,5 @@ export const ENV = {
   S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY!,
   S3_URL: process.env.S3_URL!,
 };
+
+export const RESPONSE_TOKEN_THRESHOLD = 5000;
