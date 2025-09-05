@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { s3Client } from "./lib/s3.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { DOMParser } from "xmldom";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { ENV, RESPONSE_TOKEN_THRESHOLD } from "./lib/config.js";
 import { get_encoding } from "tiktoken";
@@ -166,42 +165,6 @@ export function isSapEndpoint(url: string) {
 }
 
 /**
- * Fetches the CSRF token using DataMaker API
- * @param url - The URL of the SAP endpoint
- * @param jwtToken - The JWT token for the user
- * @returns The CSRF data
- */
-export async function fetchCsrfToken(url: string, authorization: string) {
-  const response = await fetch(
-    `${DATAMAKER_API_URL}/getcsrftoken`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "credentials": "include",
-      },
-      body: JSON.stringify({
-        sapUrl: url,
-        authorization: authorization || "",
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to get CSRF token: ${response.status}, response: ${errorText}`
-    );
-  }
-
-  return response.json() as Promise<{
-    csrf_token: string;
-    cookie_name: string;
-    cookie_value: string;
-  }>;
-}
-
-/**
  * Parses the response data into proper format
  * @param response - The original response from the endpoint
  * @returns The response data
@@ -225,56 +188,6 @@ export async function parseResponseData(response: Response) {
       );
     }
   }
-}
-
-/**
- * Creates SAP headers for the CSRF token and cookie
- * @param csrfData - The CSRF data from the fetchCsrfToken function
- * @returns The SAP headers
- */
-export function createSapHeaders(csrfData: {
-  csrf_token: string;
-  cookie_name: string;
-  cookie_value: string;
-}) {
-  return {
-    "x-csrf-token": csrfData.csrf_token,
-    Cookie: csrfData.cookie_name + "=" + csrfData.cookie_value,
-  };
-}
-
-/**
- * Prepares SAP endpoint for metadata fetching
- * @param url - The URL of the SAP endpoint
- * @returns The URL for metadata fetching
- */
-export function buildMetadataUrl(serviceUrl: string): string {
-  const trimmed = serviceUrl.replace(/\/+$/, "");
-  // If ends with an entity set (like /A_BusinessPartner), replace it
-  if (/\/A_BusinessPartner$/i.test(trimmed)) {
-    return trimmed.replace(/\/A_BusinessPartner$/i, "/$metadata");
-  }
-  return `${trimmed}/$metadata`;
-}
-
-/**
- * Extracts entity names from an OData $metadata XML.
- * @param metadataXml - The raw OData $metadata XML string returned from SAP.
- * @returns A promise that resolves to an array of entity names.
- */
-export async function extractEntityProperties(
-  metadataXml: string
-): Promise<string[]> {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(metadataXml, "application/xml");
-
-  // Get all EntitySet nodes to find available entities
-  const entitySetNodes = Array.from(xmlDoc.getElementsByTagName("EntitySet"));
-  const entities = entitySetNodes.map(
-    (node) => node.getAttribute("Name") || ""
-  );
-
-  return entities.filter(Boolean);
 }
 
 /**

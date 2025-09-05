@@ -5,11 +5,7 @@ import {
   fetchAPI,
   storeToS3AndSummarize,
   isSapEndpoint,
-  fetchCsrfToken,
-  createSapHeaders,
   parseResponseData,
-  buildMetadataUrl,
-  extractEntityProperties,
   countTokens,
   convertToObjectArray,
 } from "./helpers.js";
@@ -369,72 +365,42 @@ export function registerTools(server: McpServer) {
           ctx?.jwtToken
         );
 
-        // Check if this is a SAP endpoint that requires CSRF token
+        // Check if this is a SAP endpoint and return early error
         if (isSapEndpoint(endpoint.url)) {
-          // First, get the CSRF token from the main DataMaker application
-          const csrfData = await fetchCsrfToken(
-            endpoint.url,
-            endpoint.headers?.Authorization
-          );
-
-          // Prepare headers with CSRF token and cookies for SAP export request
-          const sapHeaders = createSapHeaders(csrfData);
-          const headers = {
-            ...sapHeaders,
-            ...endpoint.headers,
-          };
-
-          // export the data to SAP endpoint
-          const response = await fetch(endpoint.url, {
-            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-            headers: headers,
-            body: JSON.stringify(data),
-            credentials: "include",
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-              `SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`
-            );
-          }
-
-          const responseData = await parseResponseData(response);
-
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(responseData, null, 2),
-              },
-            ],
-          };
-        } else {
-          // export the data
-          const response = await fetch(endpoint.url, {
-            method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-            headers: endpoint.headers,
-            body: JSON.stringify(data),
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-              `HTTP error! status: ${response.status}, response: ${errorText}`
-            );
-          }
-
-          const responseData = await parseResponseData(response);
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(responseData, null, 2),
+                text: "Error: This tool was incorrectly used for a SAP endpoint. Please use the appropriate tool for SAP endpoints instead.",
               },
             ],
           };
         }
+
+        // Handle non-SAP endpoints
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+          headers: endpoint.headers,
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status}, response: ${errorText}`
+          );
+        }
+
+        const responseData = await parseResponseData(response);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(responseData, null, 2),
+            },
+          ],
+        };
       } catch (error) {
         return {
           content: [
@@ -467,102 +433,56 @@ export function registerTools(server: McpServer) {
           ctx?.jwtToken
         );
 
-        // Check if this is a SAP endpoint
-        let targetUrl = endpoint?.url;
+        // Check if this is a SAP endpoint and return early error
         if (isSapEndpoint(endpoint?.url)) {
-          const itemsLimit = 20;
-          const headers = endpoint.headers;
-
-          // Construct dynamic filter clause for all field-operator-value combinations
-          let filterClause = "";
-          if (filter && Object.keys(filter).length > 0) {
-            const filterConditions = Object.entries(filter).map(([fieldName, filterObj]) => {
-              const { value, operator } = filterObj as { value: string; operator: string };
-              return `${fieldName} ${operator} '${value}'`;
-            });
-            filterClause = `&$filter=${filterConditions.join(' and ')}`;
-          }
-
-          const separator = targetUrl.includes("?") ? "&" : "?";
-          targetUrl = `${targetUrl}${separator}${filterClause}`;          
-
-          const response = await fetch(targetUrl, {
-            method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
-            headers: headers,
-            credentials: "include",
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-              `SAP endpoint export HTTP error! status: ${response.status}, response: ${errorText}`
-            );
-          }
-
-          const responseData = await parseResponseData(response);          
-          const tokens = countTokens(JSON.stringify(responseData, null, 2));
-
-          if (tokens > tokenThreshold) {
-            // Convert the response data to an array of objects for S3 storage
-            const objectArray = convertToObjectArray(responseData);
-            const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Response data (${result.totalCount} items) is too large to show. Showing first ${result.summary.length} items:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
-                },
-              ],
-            };
-          }          
-
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(responseData, null, 2),
-              },
-            ],
-          };
-        } else {
-          const response = await fetch(targetUrl, {
-            method: endpoint?.method as "GET" | "POST" | "PUT" | "DELETE",
-            headers: endpoint?.headers,
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-              `HTTP error! status: ${response.status}, response: ${errorText}`
-            );
-          }
-
-          const responseData = await parseResponseData(response);
-
-          const tokens = countTokens(JSON.stringify(responseData, null, 2));
-          if (tokens > tokenThreshold) {
-            // Convert the response data to an array of objects for S3 storage
-            const objectArray = convertToObjectArray(responseData);
-            const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Response data (${result.totalCount} items) is too large to show. Showing first ${result.summary.length} items:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
-                },
-              ],
-            };
-          }
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(responseData, null, 2),
+                text: "Error: This tool was incorrectly used for a SAP endpoint. Please use the appropriate tool for SAP endpoints instead.",
               },
             ],
           };
         }
+
+        // Handle non-SAP endpoints
+        const response = await fetch(endpoint.url, {
+          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
+          headers: endpoint.headers,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status}, response: ${errorText}`
+          );
+        }
+
+        const responseData = await parseResponseData(response);
+        const tokens = countTokens(JSON.stringify(responseData, null, 2));
+
+        if (tokens > tokenThreshold) {
+          // Convert the response data to an array of objects for S3 storage
+          const objectArray = convertToObjectArray(responseData);
+          const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Response data (${result.totalCount} items) is too large to show. Showing first ${result.summary.length} items:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+              },
+            ],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(responseData, null, 2),
+            },
+          ],
+        };
       } catch (error) {
         return {
           content: [
