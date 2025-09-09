@@ -369,8 +369,6 @@ export function registerTools(server: McpServer) {
     }
   );
 
-  // TODO: Make this available when we have /connections/:id endpoint (currently not implemented)
-
   server.tool(
     "get_connection_by_id",
     "Get a connection by id",
