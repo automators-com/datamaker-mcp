@@ -222,6 +222,45 @@ export function registerTools(server: McpServer) {
     }
   );
 
+  server.tool(
+    "delete_connection",
+    "Delete a connection by id",
+    {
+      connection_id: z.string().describe("A valid datamaker connection id"),
+    },
+    async ({ connection_id }, context) => {
+      const ctx = context as any;
+      try {
+        const response = await fetchAPI<{ message: string }>(
+          `/connections/${connection_id}`,
+          "DELETE",
+          undefined,
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
   // TODO: Make this available when we have /connections/:id endpoint (currently not implemented)
 
   // server.tool("get_connection_by_id", "Get a connection by id", {
@@ -421,7 +460,12 @@ export function registerTools(server: McpServer) {
     "Fetch data from one of the user defined endpoints from datamaker.",
     {
       endpoint_id: z.string().describe("A valid endpoint id"),
-      filter: z.any().optional().describe("Filter object with field names as keys and objects with value and operator properties"),
+      filter: z
+        .any()
+        .optional()
+        .describe(
+          "Filter object with field names as keys and objects with value and operator properties"
+        ),
     },
     async ({ endpoint_id, filter }, context) => {
       const ctx = context as any;
@@ -464,7 +508,10 @@ export function registerTools(server: McpServer) {
         if (tokens > tokenThreshold) {
           // Convert the response data to an array of objects for S3 storage
           const objectArray = convertToObjectArray(responseData);
-          const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
+          const result = await storeToS3AndSummarize(
+            objectArray,
+            "endpoint-responses"
+          );
           return {
             content: [
               {
