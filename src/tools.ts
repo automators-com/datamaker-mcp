@@ -263,39 +263,51 @@ export function registerTools(server: McpServer) {
 
   // TODO: Make this available when we have /connections/:id endpoint (currently not implemented)
 
-  // server.tool("get_connection_by_id", "Get a connection by id", {
-  //   connection_id: z.string().describe("A valid datamaker connection id"),
-  // }, async ({connection_id}, context) => {
-  //   const ctx = context as any;
-  //   try {
-  //     const connection = await fetchAPI<Connection>(
-  //       `/connections/${connection_id}`,
-  //       "GET",
-  //       undefined,
-  //       ctx?.jwtToken
-  //     );
+  server.tool(
+    "get_connection_by_id",
+    "Get a connection by id",
+    {
+      connection_id: z.string().describe("A valid datamaker connection id"),
+    },
+    async ({ connection_id }, context) => {
+      const ctx = context as any;
+      try {
+        const connection = await fetchAPI<Connection>(
+          `/connections/${connection_id}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
 
-  //     return {
-  //       content: [
-  //         {
-  //           type: "text",
-  //           text: JSON.stringify(connection, null, 2),
-  //         },
-  //       ],
-  //     };
-  //   } catch (error) {
-  //     return {
-  //       content: [
-  //         {
-  //           type: "text",
-  //           text: `Error: ${
-  //             error instanceof Error ? error.message : "Unknown error"
-  //           }`,
-  //         },
-  //       ],
-  //     };
-  //   }
-  // });
+        const simplifiedConnectionObject = {
+          id: connection.id,
+          name: connection.name,
+          conectionString: connection.connectionString,
+          type: connection.type,
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(simplifiedConnectionObject, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 
   server.tool("get_endpoints", "Get all endpoints", {}, async ({}, context) => {
     const ctx = context as any;
