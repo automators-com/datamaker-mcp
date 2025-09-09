@@ -261,6 +261,114 @@ export function registerTools(server: McpServer) {
     }
   );
 
+  server.tool(
+    "create_connection",
+    "Create a new connection",
+    {
+      name: z.string().describe("Name of the connection"),
+      connectionString: z
+        .string()
+        .describe("Connection string for the database"),
+      type: z
+        .string()
+        .describe(
+          "Type of the connection (e.g., 'postgresql', 'mysql', 'mongodb')"
+        ),
+    },
+    async ({ name, connectionString, type }, context) => {
+      const ctx = context as any;
+      try {
+        const connection = await fetchAPI<Connection>(
+          "/connections",
+          "POST",
+          {
+            name,
+            connectionString,
+            type,
+          },
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(connection, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "update_connection",
+    "Update a connection by id",
+    {
+      connection_id: z.string().describe("A valid datamaker connection id"),
+      name: z.string().optional().describe("Name of the connection"),
+      connectionString: z
+        .string()
+        .optional()
+        .describe("Connection string for the database"),
+      type: z
+        .string()
+        .optional()
+        .describe(
+          "Type of the connection (e.g., 'postgresql', 'mysql', 'mongodb')"
+        ),
+    },
+    async ({ connection_id, name, connectionString, type }, context) => {
+      const ctx = context as any;
+      try {
+        // Build update data object with only provided fields
+        const updateData: any = {};
+        if (name !== undefined) updateData.name = name;
+        if (connectionString !== undefined)
+          updateData.connectionString = connectionString;
+        if (type !== undefined) updateData.type = type;
+
+        const connection = await fetchAPI<Connection>(
+          `/connections/${connection_id}`,
+          "PUT",
+          updateData,
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(connection, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
   // TODO: Make this available when we have /connections/:id endpoint (currently not implemented)
 
   server.tool(
