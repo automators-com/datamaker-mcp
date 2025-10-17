@@ -222,41 +222,198 @@ export function registerTools(server: McpServer) {
     }
   );
 
-  // TODO: Make this available when we have /connections/:id endpoint (currently not implemented)
+  server.tool(
+    "delete_connection",
+    "Delete a connection by id",
+    {
+      connection_id: z.string().describe("A valid datamaker connection id"),
+    },
+    async ({ connection_id }, context) => {
+      const ctx = context as any;
+      try {
+        const response = await fetchAPI<{ message: string }>(
+          `/connections/${connection_id}`,
+          "DELETE",
+          undefined,
+          ctx?.jwtToken
+        );
 
-  // server.tool("get_connection_by_id", "Get a connection by id", {
-  //   connection_id: z.string().describe("A valid datamaker connection id"),
-  // }, async ({connection_id}, context) => {
-  //   const ctx = context as any;
-  //   try {
-  //     const connection = await fetchAPI<Connection>(
-  //       `/connections/${connection_id}`,
-  //       "GET",
-  //       undefined,
-  //       ctx?.jwtToken
-  //     );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 
-  //     return {
-  //       content: [
-  //         {
-  //           type: "text",
-  //           text: JSON.stringify(connection, null, 2),
-  //         },
-  //       ],
-  //     };
-  //   } catch (error) {
-  //     return {
-  //       content: [
-  //         {
-  //           type: "text",
-  //           text: `Error: ${
-  //             error instanceof Error ? error.message : "Unknown error"
-  //           }`,
-  //         },
-  //       ],
-  //     };
-  //   }
-  // });
+  server.tool(
+    "create_connection",
+    "Create a new connection",
+    {
+      name: z.string().describe("Name of the connection"),
+      connectionString: z
+        .string()
+        .describe("Connection string for the database"),
+      type: z
+        .string()
+        .describe(
+          "Type of the connection (e.g., 'postgresql', 'mysql', 'mongodb')"
+        ),
+    },
+    async ({ name, connectionString, type }, context) => {
+      const ctx = context as any;
+      try {
+        const connection = await fetchAPI<Connection>(
+          "/connections",
+          "POST",
+          {
+            name,
+            connectionString,
+            type,
+          },
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(connection, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "update_connection",
+    "Update a connection by id",
+    {
+      connection_id: z.string().describe("A valid datamaker connection id"),
+      name: z.string().optional().describe("Name of the connection"),
+      connectionString: z
+        .string()
+        .optional()
+        .describe("Connection string for the database"),
+      type: z
+        .string()
+        .optional()
+        .describe(
+          "Type of the connection (e.g., 'postgresql', 'mysql', 'mongodb')"
+        ),
+    },
+    async ({ connection_id, name, connectionString, type }, context) => {
+      const ctx = context as any;
+      try {
+        // Build update data object with only provided fields
+        const updateData: any = {};
+        if (name !== undefined) updateData.name = name;
+        if (connectionString !== undefined)
+          updateData.connectionString = connectionString;
+        if (type !== undefined) updateData.type = type;
+
+        const connection = await fetchAPI<Connection>(
+          `/connections/${connection_id}`,
+          "PUT",
+          updateData,
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(connection, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_connection_by_id",
+    "Get a connection by id",
+    {
+      connection_id: z.string().describe("A valid datamaker connection id"),
+    },
+    async ({ connection_id }, context) => {
+      const ctx = context as any;
+      try {
+        const connection = await fetchAPI<Connection>(
+          `/connections/${connection_id}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
+
+        const simplifiedConnectionObject = {
+          id: connection.id,
+          name: connection.name,
+          conectionString: connection.connectionString,
+          type: connection.type,
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(simplifiedConnectionObject, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 
   server.tool("get_endpoints", "Get all endpoints", {}, async ({}, context) => {
     const ctx = context as any;
@@ -421,7 +578,12 @@ export function registerTools(server: McpServer) {
     "Fetch data from one of the user defined endpoints from datamaker.",
     {
       endpoint_id: z.string().describe("A valid endpoint id"),
-      filter: z.any().optional().describe("Filter object with field names as keys and objects with value and operator properties"),
+      filter: z
+        .any()
+        .optional()
+        .describe(
+          "Filter object with field names as keys and objects with value and operator properties"
+        ),
     },
     async ({ endpoint_id, filter }, context) => {
       const ctx = context as any;
@@ -464,7 +626,10 @@ export function registerTools(server: McpServer) {
         if (tokens > tokenThreshold) {
           // Convert the response data to an array of objects for S3 storage
           const objectArray = convertToObjectArray(responseData);
-          const result = await storeToS3AndSummarize(objectArray, "endpoint-responses");
+          const result = await storeToS3AndSummarize(
+            objectArray,
+            "endpoint-responses"
+          );
           return {
             content: [
               {
