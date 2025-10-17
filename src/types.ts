@@ -409,3 +409,12 @@ export interface Template {
   fields: Fields;
   [key: string]: any;
 }
+
+export interface Scenario {
+  id: string;
+  name: string;
+  presignedUrl?: string;
+  requirementsUrl?: string;
+  projectId?: string;
+  teamId?: string;
+}
