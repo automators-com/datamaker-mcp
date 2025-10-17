@@ -812,18 +812,17 @@ server.tool(
     "Execute a Datamaker scenario",
     {
       scenarioId: z.string().describe("A valid datamaker scenario id"),
+      projectId: z.string().describe("A valid datamaker project id"),
     },
-    async ({ scenarioId }, context) => {
+    async ({ scenarioId, projectId }, context) => {
       const ctx = context as any;
       try {
         const response = await fetchAPI<any>(
           `/scenarios/execute`,
           "POST",
-          { scenarioId },
+          { projectId, scenarioId },
           ctx?.jwtToken
         );
-
-        console.log("response", response);
 
         return {
           content: [
@@ -853,14 +852,15 @@ server.tool(
     "Get a scenario by id",
     {
       scenarioId: z.string().describe("A valid datamaker scenario id"),
+      projectId: z.string().describe("A valid datamaker project id"),
     },
-    async ({ scenarioId }, context) => {
+    async ({ scenarioId, projectId }, context) => {
       const ctx = context as any;
       try {
         const scenario = await fetchAPI<Scenario>(
           `/scenarios/${scenarioId}`,
           "GET",
-          undefined,
+          { projectId },
           ctx?.jwtToken
         );
 
