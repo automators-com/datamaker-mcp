@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Template, DataMakerResponse, Connection, Endpoint } from "./types.js";
+import { Template, DataMakerResponse, Connection, Endpoint, Scenario } from "./types.js";
 import {
   fetchAPI,
   storeToS3AndSummarize,
@@ -760,4 +760,186 @@ export function registerTools(server: McpServer) {
       }
     }
   );
-}
+
+server.tool(
+    "save_scenario",
+    "Save Datamaker scenario into database",
+    {
+      code: z.string().describe("Python code for the scenario"),
+      name: z.string().describe("Name of the scenario")      
+    },
+    async ({ code, name }, context) => {
+      const ctx = context as any;
+      try {
+        const scenario = await fetchAPI<Promise<Scenario>>(
+          `/scenarios/save`,
+          "POST",
+          { code, name },
+          ctx?.jwtToken
+        );       
+
+        if (!scenario) {
+          throw new Error(
+            "Failed to save scenario."
+          );
+        };
+       
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(scenario, null, 2),
+            },
+          ],
+        };       
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "execute_scenario",
+    "Execute a Datamaker scenario",
+    {
+      scenarioId: z.string().describe("A valid datamaker scenario id"),
+      projectId: z.string().describe("A valid datamaker project id"),
+    },
+    async ({ scenarioId, projectId }, context) => {
+      const ctx = context as any;
+      try {
+        const response = await fetchAPI<any>(
+          `/scenarios/execute`,
+          "POST",
+          { projectId, scenarioId },
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_scenario_by_id",
+    "Get a scenario by id",
+    {
+      scenarioId: z.string().describe("A valid datamaker scenario id"),
+      projectId: z.string().describe("A valid datamaker project id"),
+    },
+    async ({ scenarioId, projectId }, context) => {
+      const ctx = context as any;
+      try {
+        const scenario = await fetchAPI<Scenario>(
+          `/scenarios/${scenarioId}`,
+          "GET",
+          { projectId },
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(scenario, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_scenarios",
+    "Get all scenarios",
+    {},
+    async ({}, context) => {
+      const ctx = context as any;
+      try {
+        const scenarios = await fetchAPI<Scenario[]>(
+          "/scenarios",
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
+
+        const tokens = countTokens(JSON.stringify(scenarios, null, 2));
+
+        if (tokens > tokenThreshold) {
+          const result = await storeToS3AndSummarize(scenarios, "scenarios");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Available scenarios (${result.totalCount} scenarios) are too large to show. Showing first ${result.summary.length} scenarios:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all scenarios in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+              },
+            ],
+          };
+        }
+
+        const simplifiedScenarioObjects = scenarios.map((scenario) => ({
+          id: scenario.id,
+          name: scenario.name,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(simplifiedScenarioObjects, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
+} 
