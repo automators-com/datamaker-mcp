@@ -9,6 +9,7 @@ The Automators DataMaker MCP (Model Context Protocol) server provides a seamless
 - Fetch and manage DataMaker connections
 - Push data to DataMaker connections
 - **Large dataset handling**: Automatically stores large endpoint datasets to S3 and provides summary with view links
+- **MCP Prompts**: Pre-built prompts to help you get started and guide you through common workflows
 
 ## 📦 Installation
 
@@ -36,6 +37,22 @@ Add the following to your `mcp.json` file:
 - AWS S3 bucket and credentials (for large dataset storage)
 
 ## 🏃‍♂️ Usage
+
+### MCP Prompts
+
+The DataMaker MCP server includes helpful prompts to guide you through common workflows. These prompts can be accessed through any MCP-compatible client that supports prompts.
+
+Available prompts:
+
+1. **`getting-started`** - Complete introduction to DataMaker and its capabilities
+2. **`generate-synthetic-data`** - Guide for generating synthetic data from templates
+3. **`export-data-workflow`** - Guide for exporting data to endpoints
+4. **`endpoint-data-workflow`** - Guide for fetching and working with endpoint data
+5. **`template-management`** - Guide for understanding and managing templates
+6. **`connection-management`** - Guide for managing database connections
+7. **`scenario-workflow`** - Guide for working with DataMaker scenarios (Python code execution)
+
+These prompts provide step-by-step instructions and automatically suggest which tools to use for your specific task.
 
 ### Large Dataset Handling
 
