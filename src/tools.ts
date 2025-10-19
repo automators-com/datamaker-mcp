@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Template, DataMakerResponse, Connection, Endpoint, Scenario } from "./types.js";
+import {
+  Template,
+  DataMakerResponse,
+  Connection,
+  Endpoint,
+  Scenario,
+} from "./types.js";
 import {
   fetchAPI,
   storeToS3AndSummarize,
@@ -107,7 +113,17 @@ export function registerTools(server: McpServer) {
             content: [
               {
                 type: "text",
-                text: `Available templates (${result.totalCount} templates) are too large to show. Showing first ${result.summary.length} templates:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all templates in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+                text: `Available templates (${
+                  result.totalCount
+                } templates) are too large to show. Showing first ${
+                  result.summary.length
+                } templates:\n\n${JSON.stringify(
+                  result.summary,
+                  null,
+                  2
+                )}\n\nFull dataset stored to S3\n🔗 **View all templates in a link that opens in a new tab: ${
+                  result.viewUrl
+                }\n\nThis link expires in 24 hours.`,
               },
             ],
           };
@@ -432,7 +448,17 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Available endpoints (${result.totalCount} endpoints) are too large to show. Showing first ${result.summary.length} endpoints:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all endpoints in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+              text: `Available endpoints (${
+                result.totalCount
+              } endpoints) are too large to show. Showing first ${
+                result.summary.length
+              } endpoints:\n\n${JSON.stringify(
+                result.summary,
+                null,
+                2
+              )}\n\nFull dataset stored to S3\n🔗 **View all endpoints in a link that opens in a new tab: ${
+                result.viewUrl
+              }\n\nThis link expires in 24 hours.`,
             },
           ],
         };
@@ -634,7 +660,17 @@ export function registerTools(server: McpServer) {
             content: [
               {
                 type: "text",
-                text: `Response data (${result.totalCount} items) is too large to show. Showing first ${result.summary.length} items:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
+                text: `Response data (${
+                  result.totalCount
+                } items) is too large to show. Showing first ${
+                  result.summary.length
+                } items:\n\n${JSON.stringify(
+                  result.summary,
+                  null,
+                  2
+                )}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${
+                  result.viewUrl
+                }\n\nThis link expires in 24 hours.`,
               },
             ],
           };
@@ -662,50 +698,6 @@ export function registerTools(server: McpServer) {
       }
     }
   );
-
-  // server.tool(
-  //   "generate_from_template",
-  //   "Generate data from a datamaker template.",
-  //   {
-  //     fields: DataMakerFieldsSchema.describe(
-  //       "Fields for the datamaker template"
-  //     ),
-  //     quantity: z
-  //       .number()
-  //       .default(10)
-  //       .describe("Number of records to generate"),
-  //   },
-  //   async ({ fields, quantity }, context) => {
-  //   const ctx = context as any;
-  //     try {
-  //       const response = await fetchAPI<DataMakerResponse>(
-  //         "/datamaker",
-  //         "POST",
-  //         { fields, quantity },
-  //          ctx?.jwtToken
-  //       );
-  //       return {
-  //         content: [
-  //           {
-  //             type: "text",
-  //             text: JSON.stringify(response.live_data ?? response, null, 2),
-  //           },
-  //         ],
-  //       };
-  //     } catch (error) {
-  //       return {
-  //         content: [
-  //           {
-  //             type: "text",
-  //             text: `Error: ${
-  //               error instanceof Error ? error.message : "Unknown error"
-  //             }`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   }
-  // );
 
   server.tool(
     "flatten_json",
@@ -761,12 +753,12 @@ export function registerTools(server: McpServer) {
     }
   );
 
-server.tool(
+  server.tool(
     "save_scenario",
     "Save Datamaker scenario into database",
     {
       code: z.string().describe("Python code for the scenario"),
-      name: z.string().describe("Name of the scenario")      
+      name: z.string().describe("Name of the scenario"),
     },
     async ({ code, name }, context) => {
       const ctx = context as any;
@@ -776,14 +768,12 @@ server.tool(
           "POST",
           { code, name },
           ctx?.jwtToken
-        );       
+        );
 
         if (!scenario) {
-          throw new Error(
-            "Failed to save scenario."
-          );
-        };
-       
+          throw new Error("Failed to save scenario.");
+        }
+
         return {
           content: [
             {
@@ -791,7 +781,7 @@ server.tool(
               text: JSON.stringify(scenario, null, 2),
             },
           ],
-        };       
+        };
       } catch (error) {
         return {
           content: [
@@ -887,44 +877,109 @@ server.tool(
     }
   );
 
+  server.tool("get_scenarios", "Get all scenarios", {}, async ({}, context) => {
+    const ctx = context as any;
+    try {
+      const scenarios = await fetchAPI<Scenario[]>(
+        "/scenarios",
+        "GET",
+        undefined,
+        ctx?.jwtToken
+      );
+
+      const tokens = countTokens(JSON.stringify(scenarios, null, 2));
+
+      if (tokens > tokenThreshold) {
+        const result = await storeToS3AndSummarize(scenarios, "scenarios");
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Available scenarios (${
+                result.totalCount
+              } scenarios) are too large to show. Showing first ${
+                result.summary.length
+              } scenarios:\n\n${JSON.stringify(
+                result.summary,
+                null,
+                2
+              )}\n\nFull dataset stored to S3\n🔗 **View all scenarios in a link that opens in a new tab: ${
+                result.viewUrl
+              }\n\nThis link expires in 24 hours.`,
+            },
+          ],
+        };
+      }
+
+      const simplifiedScenarioObjects = scenarios.map((scenario) => ({
+        id: scenario.id,
+        name: scenario.name,
+      }));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(simplifiedScenarioObjects, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          },
+        ],
+      };
+    }
+  });
+
   server.tool(
-    "get_scenarios",
-    "Get all scenarios",
-    {},
-    async ({}, context) => {
+    "execute_python_script",
+    "Execute a Python script by first saving it to S3 and then running it using the datamaker runner",
+    {
+      script: z.string().describe("The Python script code to execute"),
+      filename: z
+        .string()
+        .describe("The filename for the script (e.g., 'script.py')"),
+    },
+    async ({ script, filename }, context) => {
       const ctx = context as any;
       try {
-        const scenarios = await fetchAPI<Scenario[]>(
-          "/scenarios",
-          "GET",
-          undefined,
+        // Step 1: Save the script to S3
+        const saveResponse = await fetchAPI<{ url: string }>(
+          "/upload-text",
+          "POST",
+          {
+            text: script,
+            filename: filename,
+          },
           ctx?.jwtToken
         );
 
-        const tokens = countTokens(JSON.stringify(scenarios, null, 2));
-
-        if (tokens > tokenThreshold) {
-          const result = await storeToS3AndSummarize(scenarios, "scenarios");
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Available scenarios (${result.totalCount} scenarios) are too large to show. Showing first ${result.summary.length} scenarios:\n\n${JSON.stringify(result.summary, null, 2)}\n\nFull dataset stored to S3\n🔗 **View all scenarios in a link that opens in a new tab: ${result.viewUrl}\n\nThis link expires in 24 hours.`,
-              },
-            ],
-          };
+        if (!saveResponse.url) {
+          throw new Error("Failed to save script: No URL returned");
         }
 
-        const simplifiedScenarioObjects = scenarios.map((scenario) => ({
-          id: scenario.id,
-          name: scenario.name,
-        }));
+        // Step 2: Execute the script using the returned URL
+        const runResponse = await fetchAPI<any>(
+          "/execute-python",
+          "POST",
+          {
+            url: saveResponse.url,
+          },
+          ctx?.jwtToken
+        );
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(simplifiedScenarioObjects, null, 2),
+              text: JSON.stringify(runResponse, null, 2),
             },
           ],
         };
@@ -942,4 +997,4 @@ server.tool(
       }
     }
   );
-} 
+}

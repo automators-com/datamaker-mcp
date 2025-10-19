@@ -9,6 +9,7 @@ The Automators DataMaker MCP (Model Context Protocol) server provides a seamless
 - Fetch and manage DataMaker connections
 - Push data to DataMaker connections
 - **Large dataset handling**: Automatically stores large endpoint datasets to S3 and provides summary with view links
+- **Execute Python scripts**: Dynamically execute Python code by saving scripts to S3 and running them using the DataMaker runner
 
 ## 📦 Installation
 
@@ -46,6 +47,25 @@ The `get_endpoints` tool automatically detects when a large dataset is returned 
 3. **Provides a secure link** to view the complete dataset (expires in 24 hours)
 
 This prevents overwhelming responses while maintaining access to all data.
+
+### Python Script Execution
+
+The `execute_python_script` tool allows you to dynamically execute Python code:
+
+1. **Saves the script** to S3 using the `/upload-text` endpoint
+2. **Executes the script** using the DataMaker runner via the `/execute-python` endpoint
+3. **Returns the execution output** once the script completes
+
+**Usage Example:**
+```python
+# The tool accepts Python script code and a filename
+execute_python_script(
+  script="print('Hello from DataMaker!')",
+  filename="hello.py"
+)
+```
+
+This enables AI models to write and execute custom Python scripts for data processing, transformation, or any other computational tasks within the DataMaker environment.
 
 ### Development Mode
 
