@@ -52,8 +52,8 @@ This prevents overwhelming responses while maintaining access to all data.
 
 The `execute_python_script` tool allows you to dynamically execute Python code:
 
-1. **Saves the script** to S3 using the `/api/script/save` endpoint
-2. **Executes the script** using the DataMaker runner via the `/api/script/run` endpoint
+1. **Saves the script** to S3 using the `/upload-text` endpoint
+2. **Executes the script** using the DataMaker runner via the `/execute-python` endpoint
 3. **Returns the execution output** once the script completes
 
 **Usage Example:**
