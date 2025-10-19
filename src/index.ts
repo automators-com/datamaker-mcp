@@ -7,6 +7,7 @@ import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 import { HttpBindings, serve } from "@hono/node-server";
 import { registerTools } from "./tools.js";
+import { registerPrompts } from "./prompts.js";
 import { jwtMiddleware, projectIdMiddleware } from "./middleware.js";
 import { injectHonoVar } from "./helpers.js";
 
@@ -18,6 +19,7 @@ const mcpServer = new McpServer({
   capabilities: {
     resources: {},
     tools: {},
+    prompts: {},
   },
 });
 
@@ -30,8 +32,9 @@ injectHonoVar(
   () => projectId
 );
 
-// Register all tools and resources
+// Register all tools, resources, and prompts
 registerTools(mcpServer);
+registerPrompts(mcpServer);
 
 type AppVariables = {
   mcpContext?: string;
