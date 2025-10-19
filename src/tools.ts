@@ -942,4 +942,62 @@ server.tool(
       }
     }
   );
+
+  server.tool(
+    "execute_python_script",
+    "Execute a Python script by first saving it to S3 and then running it using the datamaker runner",
+    {
+      script: z.string().describe("The Python script code to execute"),
+      filename: z.string().describe("The filename for the script (e.g., 'script.py')"),
+    },
+    async ({ script, filename }, context) => {
+      const ctx = context as any;
+      try {
+        // Step 1: Save the script to S3
+        const saveResponse = await fetchAPI<{ url: string }>(
+          "/api/script/save",
+          "POST",
+          {
+            text: script,
+            filename: filename,
+          },
+          ctx?.jwtToken
+        );
+
+        if (!saveResponse.url) {
+          throw new Error("Failed to save script: No URL returned");
+        }
+
+        // Step 2: Execute the script using the returned URL
+        const runResponse = await fetchAPI<any>(
+          "/api/script/run",
+          "POST",
+          {
+            url: saveResponse.url,
+          },
+          ctx?.jwtToken
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(runResponse, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 } 
