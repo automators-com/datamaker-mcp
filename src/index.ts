@@ -24,7 +24,11 @@ const mcpServer = new McpServer({
 let lastJwtToken: string | undefined;
 let projectId: string | undefined;
 
-injectHonoVar(mcpServer, () => lastJwtToken, () => projectId);
+injectHonoVar(
+  mcpServer,
+  () => lastJwtToken,
+  () => projectId
+);
 
 // Register all tools and resources
 registerTools(mcpServer);
@@ -39,8 +43,13 @@ const app = new Hono<{ Bindings: HttpBindings; Variables: AppVariables }>();
 app.use(jwtMiddleware);
 app.use(projectIdMiddleware);
 
-app.get("/health", (c) => {
-  return new Response("ok", { status: 200 });
+app.get("/health", async (c) => {
+  // check if we can access the api
+  const res = await fetch(`${ENV.DATAMAKER_API_URL}/health`)
+    .then((r) => r.json())
+    .catch(() => false);
+
+  return c.json({ status: "ok", api: res ? "reachable" : "unreachable" });
 });
 
 app.all("/", async (c) => {
