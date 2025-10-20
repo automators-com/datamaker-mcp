@@ -782,7 +782,7 @@ export function registerTools(server: McpServer) {
         return {
           content: [
             {
-              type: "text",
+              type: "text" as const,
               text: JSON.stringify(scenario, null, 2),
             },
           ],
@@ -847,15 +847,14 @@ export function registerTools(server: McpServer) {
     "Get a scenario by id",
     {
       scenarioId: z.string().describe("A valid datamaker scenario id"),
-      projectId: z.string().describe("A valid datamaker project id"),
     },
-    async ({ scenarioId, projectId }, context) => {
+    async ({ scenarioId }, context) => {
       const ctx = context as any;
       try {
         const scenario = await fetchAPI<Scenario>(
           `/scenarios/${scenarioId}`,
           "GET",
-          { projectId },
+          undefined,
           ctx?.jwtToken
         );
 
