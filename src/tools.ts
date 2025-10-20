@@ -763,14 +763,15 @@ export function registerTools(server: McpServer) {
     {
       code: z.string().describe("Python code for the scenario"),
       name: z.string().describe("Name of the scenario"),
+      projectId: z.string().optional().describe("A valid datamaker project id"),
     },
-    async ({ code, name }, context) => {
+    async ({ code, name, projectId }, context) => {
       const ctx = context as any;
       try {
         const scenario = await fetchAPI<Promise<Scenario>>(
           `/scenarios/save`,
           "POST",
-          { code, name },
+          { code, name, projectId },
           ctx?.jwtToken
         );
 
