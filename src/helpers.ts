@@ -45,7 +45,9 @@ export async function fetchAPI<T>(
       );
     }
     throw new Error(
-      `HTTP error! status: ${response.status}, response: ${errorBody}`
+      `HTTP error! status: ${response.status}, response: ${JSON.stringify(
+        errorBody
+      )}`
     );
   }
 
@@ -88,18 +90,18 @@ export async function storeToS3AndSummarize(
     const viewUrl = await getSignedUrl(s3Client, getCommand, {
       expiresIn: 86400,
     }); // 24 hours
-    
+
     let tokenCount = 0;
 
     for (let i = 0; i < data.length; i++) {
       const item = data[i];
       const tokens = countTokens(JSON.stringify(item, null, 2));
-      
+
       tokenCount += tokens;
       if (tokenCount > tokenThreshold) {
         // Slice to return at least 1 item
-        const slicedData = i > 1 ? data.slice(0, i) : data.slice(0, 1);  
-        
+        const slicedData = i > 1 ? data.slice(0, i) : data.slice(0, 1);
+
         return {
           summary: slicedData,
           totalCount: data.length,
@@ -107,18 +109,20 @@ export async function storeToS3AndSummarize(
           viewUrl,
         };
       }
-    }   
+    }
 
     return {
       summary: data,
       totalCount: data.length,
       s3Key,
       viewUrl,
-    };    
+    };
   } catch (error) {
     console.error("Error storing data to S3:", error);
     throw new Error(
-      `Failed to store data to S3: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to store data to S3: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 }
@@ -219,7 +223,7 @@ export function convertToObjectArray(data: any): any[] {
   }
 
   // If it's a primitive value (string, number, boolean), wrap it in an object
-  if (typeof data !== 'object') {
+  if (typeof data !== "object") {
     return [{ value: data }];
   }
 
@@ -227,7 +231,14 @@ export function convertToObjectArray(data: any): any[] {
   const obj = data as Record<string, any>;
 
   // Check if the object has common array-like properties
-  const arrayLikeKeys = ['data', 'items', 'results', 'records', 'list', 'array'];
+  const arrayLikeKeys = [
+    "data",
+    "items",
+    "results",
+    "records",
+    "list",
+    "array",
+  ];
   for (const key of arrayLikeKeys) {
     if (obj[key] && Array.isArray(obj[key])) {
       return obj[key];
@@ -241,7 +252,8 @@ export function convertToObjectArray(data: any): any[] {
 
   // Check if the object has nested objects that could be treated as separate items
   const nestedObjects = Object.values(obj).filter(
-    value => typeof value === 'object' && value !== null && !Array.isArray(value)
+    (value) =>
+      typeof value === "object" && value !== null && !Array.isArray(value)
   );
 
   // If there are multiple nested objects, treat them as separate items
@@ -263,11 +275,11 @@ export function convertToObjectArray(data: any): any[] {
   for (const [key, value] of Object.entries(obj)) {
     if (Array.isArray(value) && value.length > 0) {
       // If the array contains objects, return it
-      if (typeof value[0] === 'object' && value[0] !== null) {
+      if (typeof value[0] === "object" && value[0] !== null) {
         return value;
       }
       // If the array contains primitives, wrap each in an object
-      return value.map(item => ({ [key]: item }));
+      return value.map((item) => ({ [key]: item }));
     }
   }
 

@@ -570,7 +570,9 @@ export function registerTools(server: McpServer) {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `HTTP error! status: ${response.status}, response: ${errorText}`
+            `HTTP error! status: ${response.status}, response: ${JSON.stringify(
+              errorText
+            )}`
           );
         }
 
@@ -642,7 +644,9 @@ export function registerTools(server: McpServer) {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `HTTP error! status: ${response.status}, response: ${errorText}`
+            `HTTP error! status: ${response.status}, response: ${JSON.stringify(
+              errorText
+            )}`
           );
         }
 
