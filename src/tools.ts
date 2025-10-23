@@ -199,12 +199,15 @@ export function registerTools(server: McpServer) {
   server.tool(
     "get_connections",
     "Get all connections",
-    {},
-    async ({}, context) => {
+    {
+      projectId: z.string().optional().describe("A valid datamaker project id"),
+    },
+    async ({ projectId }, context) => {
       const ctx = context as any;
       try {
+        const queryParams = projectId ? `?projectId=${projectId}` : "";
         const connections = await fetchAPI<Connection[]>(
-          "/connections",
+          `/connections${queryParams}`,
           "GET",
           undefined,
           ctx?.jwtToken
@@ -431,15 +434,22 @@ export function registerTools(server: McpServer) {
     }
   );
 
-  server.tool("get_endpoints", "Get all endpoints", {}, async ({}, context) => {
-    const ctx = context as any;
-    try {
-      const endpoints = await fetchAPI<Endpoint[]>(
-        "/endpoints",
-        "GET",
-        undefined,
-        ctx?.jwtToken
-      );
+  server.tool(
+    "get_endpoints",
+    "Get all endpoints",
+    {
+      projectId: z.string().optional().describe("A valid datamaker project id"),
+    },
+    async ({ projectId }, context) => {
+      const ctx = context as any;
+      try {
+        const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoints = await fetchAPI<Endpoint[]>(
+          `/endpoints${queryParams}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
       const tokens = countTokens(JSON.stringify(endpoints, null, 2));
 
       if (tokens > tokenThreshold) {
