@@ -98,8 +98,9 @@ export function registerTools(server: McpServer) {
       const ctx = context as any;
       try {
         const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoint = `/templates${queryParams}`;
         const templates = await fetchAPI<Template[]>(
-          `/templates${queryParams}`,
+          endpoint,
           "GET",
           undefined,
           ctx?.jwtToken
@@ -206,8 +207,9 @@ export function registerTools(server: McpServer) {
       const ctx = context as any;
       try {
         const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoint = `/connections${queryParams}`;
         const connections = await fetchAPI<Connection[]>(
-          `/connections${queryParams}`,
+          endpoint,
           "GET",
           undefined,
           ctx?.jwtToken
@@ -444,8 +446,9 @@ export function registerTools(server: McpServer) {
       const ctx = context as any;
       try {
         const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoint = `/endpoints${queryParams}`;
         const endpoints = await fetchAPI<Endpoint[]>(
-          `/endpoints${queryParams}`,
+          endpoint,
           "GET",
           undefined,
           ctx?.jwtToken
