@@ -9,7 +9,7 @@ import {
 } from "./types.js";
 import {
   fetchAPI,
-  storeToS3AndSummarize,
+  storeToR2AndSummarize,
   isSapEndpoint,
   parseResponseData,
   countTokens,
@@ -98,8 +98,9 @@ export function registerTools(server: McpServer) {
       const ctx = context as any;
       try {
         const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoint = `/templates${queryParams}`;
         const templates = await fetchAPI<Template[]>(
-          `/templates${queryParams}`,
+          endpoint,
           "GET",
           undefined,
           ctx?.jwtToken
@@ -108,7 +109,7 @@ export function registerTools(server: McpServer) {
         const tokens = countTokens(JSON.stringify(templates, null, 2));
 
         if (tokens > tokenThreshold) {
-          const result = await storeToS3AndSummarize(templates, "templates");
+          const result = await storeToR2AndSummarize(templates, "templates");
           return {
             content: [
               {
@@ -121,7 +122,7 @@ export function registerTools(server: McpServer) {
                   result.summary,
                   null,
                   2
-                )}\n\nFull dataset stored to S3\n🔗 **View all templates in a link that opens in a new tab: ${
+                )}\n\nFull dataset stored to R2\n🔗 **View all templates in a link that opens in a new tab: ${
                   result.viewUrl
                 }\n\nThis link expires in 24 hours.`,
               },
@@ -199,12 +200,16 @@ export function registerTools(server: McpServer) {
   server.tool(
     "get_connections",
     "Get all connections",
-    {},
-    async ({}, context) => {
+    {
+      projectId: z.string().optional().describe("A valid datamaker project id"),
+    },
+    async ({ projectId }, context) => {
       const ctx = context as any;
       try {
+        const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoint = `/connections${queryParams}`;
         const connections = await fetchAPI<Connection[]>(
-          "/connections",
+          endpoint,
           "GET",
           undefined,
           ctx?.jwtToken
@@ -431,19 +436,27 @@ export function registerTools(server: McpServer) {
     }
   );
 
-  server.tool("get_endpoints", "Get all endpoints", {}, async ({}, context) => {
-    const ctx = context as any;
-    try {
-      const endpoints = await fetchAPI<Endpoint[]>(
-        "/endpoints",
-        "GET",
-        undefined,
-        ctx?.jwtToken
-      );
+  server.tool(
+    "get_endpoints",
+    "Get all endpoints",
+    {
+      projectId: z.string().optional().describe("A valid datamaker project id"),
+    },
+    async ({ projectId }, context) => {
+      const ctx = context as any;
+      try {
+        const queryParams = projectId ? `?projectId=${projectId}` : "";
+        const endpoint = `/endpoints${queryParams}`;
+        const endpoints = await fetchAPI<Endpoint[]>(
+          endpoint,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
       const tokens = countTokens(JSON.stringify(endpoints, null, 2));
 
       if (tokens > tokenThreshold) {
-        const result = await storeToS3AndSummarize(endpoints, "endpoints");
+        const result = await storeToR2AndSummarize(endpoints, "endpoints");
         return {
           content: [
             {
@@ -456,7 +469,7 @@ export function registerTools(server: McpServer) {
                 result.summary,
                 null,
                 2
-              )}\n\nFull dataset stored to S3\n🔗 **View all endpoints in a link that opens in a new tab: ${
+              )}\n\nFull dataset stored to R2\n🔗 **View all endpoints in a link that opens in a new tab: ${
                 result.viewUrl
               }\n\nThis link expires in 24 hours.`,
             },
@@ -654,9 +667,9 @@ export function registerTools(server: McpServer) {
         const tokens = countTokens(JSON.stringify(responseData, null, 2));
 
         if (tokens > tokenThreshold) {
-          // Convert the response data to an array of objects for S3 storage
+          // Convert the response data to an array of objects for R2 storage
           const objectArray = convertToObjectArray(responseData);
-          const result = await storeToS3AndSummarize(
+          const result = await storeToR2AndSummarize(
             objectArray,
             "endpoint-responses"
           );
@@ -672,7 +685,7 @@ export function registerTools(server: McpServer) {
                   result.summary,
                   null,
                   2
-                )}\n\nFull dataset stored to S3\n🔗 **View all data in a link that opens in a new tab: ${
+                )}\n\nFull dataset stored to R2\n🔗 **View all data in a link that opens in a new tab: ${
                   result.viewUrl
                 }\n\nThis link expires in 24 hours.`,
               },
@@ -894,7 +907,7 @@ export function registerTools(server: McpServer) {
       const tokens = countTokens(JSON.stringify(scenarios, null, 2));
 
       if (tokens > tokenThreshold) {
-        const result = await storeToS3AndSummarize(scenarios, "scenarios");
+        const result = await storeToR2AndSummarize(scenarios, "scenarios");
         return {
           content: [
             {
@@ -907,7 +920,7 @@ export function registerTools(server: McpServer) {
                 result.summary,
                 null,
                 2
-              )}\n\nFull dataset stored to S3\n🔗 **View all scenarios in a link that opens in a new tab: ${
+              )}\n\nFull dataset stored to R2\n🔗 **View all scenarios in a link that opens in a new tab: ${
                 result.viewUrl
               }\n\nThis link expires in 24 hours.`,
             },
@@ -944,7 +957,7 @@ export function registerTools(server: McpServer) {
 
   server.tool(
     "execute_python_script",
-    "Execute a Python script by first saving it to S3 and then running it using the datamaker runner",
+    "Execute a Python script by first saving it to R2 and then running it using the datamaker runner",
     {
       script: z.string().describe("The Python script code to execute"),
       filename: z
@@ -954,7 +967,7 @@ export function registerTools(server: McpServer) {
     async ({ script, filename }, context) => {
       const ctx = context as any;
       try {
-        // Step 1: Save the script to S3
+        // Step 1: Save the script to R2
         const saveResponse = await fetchAPI<{ url: string }>(
           "/upload-text",
           "POST",
