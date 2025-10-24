@@ -4,11 +4,11 @@ export const ENV = {
   PORT: process.env.PORT ? Number(process.env.PORT) : 8001,
   DATAMAKER_API_URL:
     process.env.DATAMAKER_API_URL ?? "https://api.datamaker.dev.automators.com",
-  S3_BUCKET_NAME: process.env.S3_BUCKET_NAME ?? "datamaker-chat",
-  S3_REGION: process.env.S3_REGION ?? "auto",
-  S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID!,
-  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY!,
-  S3_URL: process.env.S3_URL!,
+  R2_BUCKET_NAME: process.env.R2_BUCKET_NAME ?? "datamaker-chat",
+  R2_REGION: process.env.R2_REGION ?? "auto",
+  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID!,
+  R2_SECRET: process.env.R2_SECRET!,
+  R2_URL: process.env.R2_URL!,
 };
 
 export const RESPONSE_TOKEN_THRESHOLD = 5000;
