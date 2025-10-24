@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { s3Client } from "./lib/s3.js";
+import { r2 } from "./lib/r2.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { ENV, RESPONSE_TOKEN_THRESHOLD } from "./lib/config.js";
@@ -7,7 +7,7 @@ import { get_encoding } from "tiktoken";
 
 // Use centralized config
 const DATAMAKER_API_URL = ENV.DATAMAKER_API_URL;
-const S3_BUCKET = ENV.S3_BUCKET_NAME;
+const R2_BUCKET = ENV.R2_BUCKET_NAME;
 
 export async function fetchAPI<T>(
   endpoint: string,
@@ -54,24 +54,24 @@ export async function fetchAPI<T>(
   return response.json() as Promise<T>;
 }
 
-export async function storeToS3AndSummarize(
+export async function storeToR2AndSummarize(
   data: any[],
   prefix: string = "endpoints"
 ): Promise<{
   summary: any[];
   totalCount: number;
-  s3Key: string;
+  r2Key: string;
   viewUrl: string;
 }> {
   try {
-    // Generate a unique key for the S3 object
+    // Generate a unique key for the R2 object
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const s3Key = `${prefix}/${timestamp}.json`;
+    const r2Key = `${prefix}/${timestamp}.json`;
     const tokenThreshold = RESPONSE_TOKEN_THRESHOLD;
 
     const putCommand = new PutObjectCommand({
-      Bucket: S3_BUCKET,
-      Key: s3Key,
+      Bucket: R2_BUCKET,
+      Key: r2Key,
       Body: JSON.stringify(data, null, 2),
       ContentType: "application/json",
       Metadata: {
@@ -80,14 +80,14 @@ export async function storeToS3AndSummarize(
       },
     });
 
-    await s3Client.send(putCommand);
+    await r2.send(putCommand);
 
     const getCommand = new GetObjectCommand({
-      Bucket: S3_BUCKET,
-      Key: s3Key,
+      Bucket: R2_BUCKET,
+      Key: r2Key,
     });
 
-    const viewUrl = await getSignedUrl(s3Client, getCommand, {
+    const viewUrl = await getSignedUrl(r2, getCommand, {
       expiresIn: 86400,
     }); // 24 hours
 
@@ -105,7 +105,7 @@ export async function storeToS3AndSummarize(
         return {
           summary: slicedData,
           totalCount: data.length,
-          s3Key,
+          r2Key,
           viewUrl,
         };
       }
@@ -114,13 +114,13 @@ export async function storeToS3AndSummarize(
     return {
       summary: data,
       totalCount: data.length,
-      s3Key,
+      r2Key,
       viewUrl,
     };
   } catch (error) {
-    console.error("Error storing data to S3:", error);
+    console.error("Error storing data to R2:", error);
     throw new Error(
-      `Failed to store data to S3: ${
+      `Failed to store data to R2: ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     );
@@ -206,10 +206,10 @@ export function countTokens(text: string) {
 }
 
 /**
- * Converts unknown data structures into an array of objects for S3 storage and summarization.
+ * Converts unknown data structures into an array of objects for R2 storage and summarization.
  * This function handles various data formats and attempts to extract meaningful objects.
  * @param data - The data to convert (can be array, object, nested structure, etc.)
- * @returns An array of objects that can be used with storeToS3AndSummarize
+ * @returns An array of objects that can be used with storeToR2AndSummarize
  */
 export function convertToObjectArray(data: any): any[] {
   // Handle null or undefined
