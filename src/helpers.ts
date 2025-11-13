@@ -165,7 +165,12 @@ export function injectHonoVar(
  * @returns True if the endpoint is a SAP endpoint, false otherwise
  */
 export function isSapEndpoint(url: string) {
-  return /\/sap\/opu\//.test(url);
+  return (
+    /\/sap\/opu\//.test(url)   || 
+    /\.hana\.ondemand\.com/i.test(url)   || 
+    /\/sap\//i.test(url) ||
+    /\/ghs\//i.test(url)
+  )
 }
 
 /**
