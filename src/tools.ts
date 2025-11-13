@@ -573,23 +573,27 @@ export function registerTools(server: McpServer) {
           };
         }
 
-        // Handle non-SAP endpoints
-        const response = await fetch(endpoint.url, {
-          method: endpoint.method as "GET" | "POST" | "PUT" | "DELETE",
-          headers: endpoint.headers,
-          body: JSON.stringify(data),
-        });
+        // Convert headers object to array format expected by /export/rest
+        const headersArray = Object.entries(endpoint.headers || {}).map(
+          ([headerKey, headerValue]) => ({
+            headerKey,
+            headerValue,
+          })
+        );
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `HTTP error! status: ${response.status}, response: ${JSON.stringify(
-              errorText
-            )}`
-          );
-        }
-
-        const responseData = await parseResponseData(response);
+        // Use /export/rest endpoint which handles authentication
+        const responseData = await fetchAPI<any>(
+          "/export/rest",
+          "POST",
+          {
+            id: endpoint_id,
+            method: endpoint.method,
+            url: endpoint.url,
+            body: data,
+            headers: headersArray,
+          },
+          ctx?.jwtToken
+        );
 
         return {
           content: [
