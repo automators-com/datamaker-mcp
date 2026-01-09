@@ -1,5 +1,11 @@
 # @automators/datamaker-mcp
 
+## 0.2.7
+
+### Patch Changes
+
+- Hugo Boss debugging
+
 ## 0.2.6
 
 ### Patch Changes
