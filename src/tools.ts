@@ -445,6 +445,8 @@ export function registerTools(server: McpServer) {
     async ({ projectId }, context) => {
       const ctx = context as any;
       try {
+        console.log("[get_endpoints] Starting", { projectId, hasJwt: !!ctx?.jwtToken });
+        
         const queryParams = projectId ? `?projectId=${projectId}` : "";
         const endpoint = `/endpoints${queryParams}`;
         const endpoints = await fetchAPI<Endpoint[]>(
@@ -453,56 +455,65 @@ export function registerTools(server: McpServer) {
           undefined,
           ctx?.jwtToken
         );
-      const tokens = countTokens(JSON.stringify(endpoints, null, 2));
+        
+        console.log("[get_endpoints] API call successful", { count: Array.isArray(endpoints) ? endpoints.length : "not array" });
+        
+        const tokens = countTokens(JSON.stringify(endpoints, null, 2));
 
-      if (tokens > tokenThreshold) {
-        const result = await storeToR2AndSummarize(endpoints, "endpoints");
+        if (tokens > tokenThreshold) {
+          const result = await storeToR2AndSummarize(endpoints, "endpoints");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Available endpoints (${
+                  result.totalCount
+                } endpoints) are too large to show. Showing first ${
+                  result.summary.length
+                } endpoints:\n\n${JSON.stringify(
+                  result.summary,
+                  null,
+                  2
+                )}\n\nFull dataset stored to R2\n🔗 **View all endpoints in a link that opens in a new tab: ${
+                  result.viewUrl
+                }\n\nThis link expires in 24 hours.`,
+              },
+            ],
+          };
+        }
+
+        const simplifiedEndpointObjects = endpoints.map((endpoint) => ({
+          id: endpoint.id,
+          name: endpoint.name,
+        }));
+
         return {
           content: [
             {
               type: "text",
-              text: `Available endpoints (${
-                result.totalCount
-              } endpoints) are too large to show. Showing first ${
-                result.summary.length
-              } endpoints:\n\n${JSON.stringify(
-                result.summary,
-                null,
-                2
-              )}\n\nFull dataset stored to R2\n🔗 **View all endpoints in a link that opens in a new tab: ${
-                result.viewUrl
-              }\n\nThis link expires in 24 hours.`,
+              text: JSON.stringify(simplifiedEndpointObjects, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[get_endpoints] Error", { 
+          error: error instanceof Error ? error.message : String(error),
+          hasJwt: !!ctx?.jwtToken 
+        });
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
             },
           ],
         };
       }
-
-      const simplifiedEndpointObjects = endpoints.map((endpoint) => ({
-        id: endpoint.id,
-        name: endpoint.name,
-      }));
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(simplifiedEndpointObjects, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
     }
-  });
+  );
 
   server.tool(
     "get_endpoint_by_id",

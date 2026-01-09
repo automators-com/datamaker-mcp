@@ -18,8 +18,11 @@ WORKDIR /src
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 -G nodejs hono
 
+# Copy entrypoint script and make it executable
+COPY --chown=hono:nodejs entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-# Copy only what’s needed to run
+# Copy only what's needed to run
 COPY --chown=hono:nodejs --from=installer /src/node_modules ./node_modules
 COPY --chown=hono:nodejs --from=installer /src/build ./build
 COPY --chown=hono:nodejs --from=installer /src/package.json ./package.json
@@ -28,4 +31,5 @@ COPY --chown=hono:nodejs --from=installer /src/pnpm-lock.yaml ./pnpm-lock.yaml
 ENV PORT=8001
 EXPOSE 8001
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "build/index.js"]

@@ -16,42 +16,71 @@ export async function fetchAPI<T>(
   jwtToken?: string
 ): Promise<T> {
   const fullUrl = `${DATAMAKER_API_URL.replace(/\/+$/, "")}/${endpoint.replace(
-    /^\/+/,
+    /^\/+/, 
     ""
   )}`;
 
   let jwt = jwtToken!;
 
-  const response = await fetch(fullUrl, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${jwt}`,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  try {
+    const response = await fetch(fullUrl, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-  if (!response.ok) {
-    let errorBody = await response.text();
-    try {
-      errorBody = JSON.parse(errorBody);
-    } catch (e) {
-      // Do nothing
-      console.error(
-        JSON.stringify({
-          status: response.status,
-          body: errorBody,
-        })
+    if (!response.ok) {
+      let errorBody = await response.text();
+      try {
+        errorBody = JSON.parse(errorBody);
+      } catch (e) {
+        // Do nothing
+        console.error(
+          JSON.stringify({
+            status: response.status,
+            body: errorBody,
+          })
+        );
+      }
+      
+      console.error("[fetchAPI] HTTP error", {
+        endpoint,
+        method,
+        url: fullUrl,
+        status: response.status,
+        statusText: response.statusText,
+        errorBody,
+      });
+      
+      throw new Error(
+        `HTTP error! status: ${response.status}, response: ${JSON.stringify(
+          errorBody
+        )}`
       );
     }
-    throw new Error(
-      `HTTP error! status: ${response.status}, response: ${JSON.stringify(
-        errorBody
-      )}`
-    );
-  }
 
-  return response.json() as Promise<T>;
+    return response.json() as Promise<T>;
+  } catch (error) {
+    // If it's already our HTTP error, re-throw it
+    if (error instanceof Error && error.message.includes("HTTP error!")) {
+      throw error;
+    }
+    
+    // Otherwise it's a network/fetch error
+    console.error("[fetchAPI] Fetch failed", {
+      endpoint,
+      method,
+      url: fullUrl,
+      error: error instanceof Error ? error.message : String(error),
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
+      hasJwt: !!jwtToken,
+    });
+    
+    throw error;
+  }
 }
 
 export async function storeToR2AndSummarize(
