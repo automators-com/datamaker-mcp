@@ -78,9 +78,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -114,17 +113,14 @@ export function registerTools(server: McpServer) {
             content: [
               {
                 type: "text",
-                text: `Available templates (${
-                  result.totalCount
-                } templates) are too large to show. Showing first ${
-                  result.summary.length
-                } templates:\n\n${JSON.stringify(
-                  result.summary,
-                  null,
-                  2
-                )}\n\nFull dataset stored to R2\n🔗 **View all templates in a link that opens in a new tab: ${
-                  result.viewUrl
-                }\n\nThis link expires in 24 hours.`,
+                text: `Available templates (${result.totalCount
+                  } templates) are too large to show. Showing first ${result.summary.length
+                  } templates:\n\n${JSON.stringify(
+                    result.summary,
+                    null,
+                    2
+                  )}\n\nFull dataset stored to R2\n🔗 **View all templates in a link that opens in a new tab: ${result.viewUrl
+                  }\n\nThis link expires in 24 hours.`,
               },
             ],
           };
@@ -148,9 +144,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -187,9 +182,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -233,9 +227,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -272,9 +265,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -323,9 +315,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -380,9 +371,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -426,9 +416,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -445,8 +434,6 @@ export function registerTools(server: McpServer) {
     async ({ projectId }, context) => {
       const ctx = context as any;
       try {
-        console.log("[get_endpoints] Starting", { projectId, hasJwt: !!ctx?.jwtToken });
-        
         const queryParams = projectId ? `?projectId=${projectId}` : "";
         const endpoint = `/endpoints${queryParams}`;
         const endpoints = await fetchAPI<Endpoint[]>(
@@ -455,9 +442,7 @@ export function registerTools(server: McpServer) {
           undefined,
           ctx?.jwtToken
         );
-        
-        console.log("[get_endpoints] API call successful", { count: Array.isArray(endpoints) ? endpoints.length : "not array" });
-        
+
         const tokens = countTokens(JSON.stringify(endpoints, null, 2));
 
         if (tokens > tokenThreshold) {
@@ -466,17 +451,14 @@ export function registerTools(server: McpServer) {
             content: [
               {
                 type: "text",
-                text: `Available endpoints (${
-                  result.totalCount
-                } endpoints) are too large to show. Showing first ${
-                  result.summary.length
-                } endpoints:\n\n${JSON.stringify(
-                  result.summary,
-                  null,
-                  2
-                )}\n\nFull dataset stored to R2\n🔗 **View all endpoints in a link that opens in a new tab: ${
-                  result.viewUrl
-                }\n\nThis link expires in 24 hours.`,
+                text: `Available endpoints (${result.totalCount
+                  } endpoints) are too large to show. Showing first ${result.summary.length
+                  } endpoints:\n\n${JSON.stringify(
+                    result.summary,
+                    null,
+                    2
+                  )}\n\nFull dataset stored to R2\n🔗 **View all endpoints in a link that opens in a new tab: ${result.viewUrl
+                  }\n\nThis link expires in 24 hours.`,
               },
             ],
           };
@@ -496,18 +478,12 @@ export function registerTools(server: McpServer) {
           ],
         };
       } catch (error) {
-        console.error("[get_endpoints] Error", { 
-          error: error instanceof Error ? error.message : String(error),
-          hasJwt: !!ctx?.jwtToken 
-        });
-        
         return {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -544,9 +520,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -619,9 +594,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -692,17 +666,14 @@ export function registerTools(server: McpServer) {
             content: [
               {
                 type: "text",
-                text: `Response data (${
-                  result.totalCount
-                } items) is too large to show. Showing first ${
-                  result.summary.length
-                } items:\n\n${JSON.stringify(
-                  result.summary,
-                  null,
-                  2
-                )}\n\nFull dataset stored to R2\n🔗 **View all data in a link that opens in a new tab: ${
-                  result.viewUrl
-                }\n\nThis link expires in 24 hours.`,
+                text: `Response data (${result.totalCount
+                  } items) is too large to show. Showing first ${result.summary.length
+                  } items:\n\n${JSON.stringify(
+                    result.summary,
+                    null,
+                    2
+                  )}\n\nFull dataset stored to R2\n🔗 **View all data in a link that opens in a new tab: ${result.viewUrl
+                  }\n\nThis link expires in 24 hours.`,
               },
             ],
           };
@@ -721,9 +692,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -775,9 +745,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -820,9 +789,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -860,9 +828,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -899,9 +866,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
@@ -909,66 +875,69 @@ export function registerTools(server: McpServer) {
     }
   );
 
-  server.tool("get_scenarios", "Get all scenarios", {}, async ({}, context) => {
-    const ctx = context as any;
-    try {
-      const scenarios = await fetchAPI<Scenario[]>(
-        "/scenarios",
-        "GET",
-        undefined,
-        ctx?.jwtToken
-      );
+  server.tool(
+    "get_scenarios",
+    "Get all scenarios",
+    {
+      projectId: z.string().optional().describe("A valid datamaker project id"),
+    },
+    async ({ projectId }, context) => {
+      const ctx = context as any;
+      const queryParams = projectId ? `?projectId=${projectId}` : "";
+      try {
+        const scenarios = await fetchAPI<Scenario[]>(
+          `/scenarios${queryParams}`,
+          "GET",
+          undefined,
+          ctx?.jwtToken
+        );
 
-      const tokens = countTokens(JSON.stringify(scenarios, null, 2));
+        const tokens = countTokens(JSON.stringify(scenarios, null, 2));
 
-      if (tokens > tokenThreshold) {
-        const result = await storeToR2AndSummarize(scenarios, "scenarios");
+        if (tokens > tokenThreshold) {
+          const result = await storeToR2AndSummarize(scenarios, "scenarios");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Available scenarios (${result.totalCount
+                  } scenarios) are too large to show. Showing first ${result.summary.length
+                  } scenarios:\n\n${JSON.stringify(
+                    result.summary,
+                    null,
+                    2
+                  )}\n\nFull dataset stored to R2\n🔗 **View all scenarios in a link that opens in a new tab: ${result.viewUrl
+                  }\n\nThis link expires in 24 hours.`,
+              },
+            ],
+          };
+        }
+
+        const simplifiedScenarioObjects = scenarios.map((scenario) => ({
+          id: scenario.id,
+          name: scenario.name,
+        }));
+
         return {
           content: [
             {
               type: "text",
-              text: `Available scenarios (${
-                result.totalCount
-              } scenarios) are too large to show. Showing first ${
-                result.summary.length
-              } scenarios:\n\n${JSON.stringify(
-                result.summary,
-                null,
-                2
-              )}\n\nFull dataset stored to R2\n🔗 **View all scenarios in a link that opens in a new tab: ${
-                result.viewUrl
-              }\n\nThis link expires in 24 hours.`,
+              text: JSON.stringify(simplifiedScenarioObjects, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
       }
-
-      const simplifiedScenarioObjects = scenarios.map((scenario) => ({
-        id: scenario.id,
-        name: scenario.name,
-      }));
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(simplifiedScenarioObjects, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          },
-        ],
-      };
-    }
-  });
+    });
 
   server.tool(
     "execute_python_script",
@@ -1020,9 +989,8 @@ export function registerTools(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Error: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
+              text: `Error: ${error instanceof Error ? error.message : "Unknown error"
+                }`,
             },
           ],
         };
