@@ -55,6 +55,7 @@ app.get("/health", async (c) => {
 app.all("/", async (c) => {
   lastJwtToken = c.get("mcpContext");
   projectId = c.get("projectId");
+
   const transport = new StreamableHTTPTransport();
 
   await mcpServer.connect(transport);
