@@ -17,6 +17,7 @@ export async function fetchAPI<T>(
   options?: {
     projectId?: string;
     teamId?: string;
+    rawBody?: boolean; // Add option to send raw body without JSON.stringify
   }
 ): Promise<T> {
   const fullUrl = `${DATAMAKER_API_URL.replace(/\/+$/, "")}/${endpoint.replace(
@@ -44,7 +45,7 @@ export async function fetchAPI<T>(
     const response = await fetch(fullUrl, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (options?.rawBody ? body : JSON.stringify(body)) : undefined,
     });
 
     if (!response.ok) {

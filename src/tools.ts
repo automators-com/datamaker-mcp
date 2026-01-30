@@ -974,9 +974,9 @@ export function registerTools(server: McpServer) {
     "Create a template from uploaded JSON data and save it to the database. Returns the saved template with field definitions that can be used to generate synthetic data.",
     {
       json_data: z
-        .any()
+        .string()
         .describe(
-          "The JSON data to create a template from. Can be a single object or an array of objects.",
+          "The JSON data as a string to create a template from. Can be a single object or an array of objects.",
         ),
       name: z
         .string()
@@ -996,6 +996,7 @@ export function registerTools(server: McpServer) {
         ),
     },
     async ({ json_data, name, projectId, teamId }, context) => {
+      console.log('json_data',json_data)
       const ctx = context as any;
       try {
         // Step 1: Generate field definitions from JSON
@@ -1004,7 +1005,7 @@ export function registerTools(server: McpServer) {
           "POST",
           json_data,
           ctx?.jwtToken,
-          { projectId: projectId, teamId: teamId }
+          { projectId: projectId, teamId: teamId, rawBody: true }
         );
 
         // Step 2: Generate a template name if not provided
