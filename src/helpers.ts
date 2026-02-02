@@ -13,7 +13,12 @@ export async function fetchAPI<T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: any,
-  jwtToken?: string
+  jwtToken?: string,
+  options?: {
+    projectId?: string;
+    teamId?: string;
+    rawBody?: boolean; // Add option to send raw body without JSON.stringify
+  }
 ): Promise<T> {
   const fullUrl = `${DATAMAKER_API_URL.replace(/\/+$/, "")}/${endpoint.replace(
     /^\/+/, 
@@ -22,14 +27,25 @@ export async function fetchAPI<T>(
 
   let jwt = jwtToken!;
 
+  // Build headers with optional project and team IDs
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${jwt}`,
+  };
+
+  if (options?.projectId) {
+    headers["X-Project-Id"] = options.projectId;
+  }
+
+  if (options?.teamId) {
+    headers["X-Team-Id"] = options.teamId;
+  }
+
   try {
     const response = await fetch(fullUrl, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${jwt}`,
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      headers,
+      body: body ? (options?.rawBody ? body : JSON.stringify(body)) : undefined,
     });
 
     if (!response.ok) {
@@ -160,7 +176,8 @@ export async function storeToR2AndSummarize(
 export function injectHonoVar(
   server: McpServer,
   getJwt: () => string | undefined,
-  getProjectId?: () => string | undefined
+  getProjectId?: () => string | undefined,
+  getTeamId?: () => string | undefined
 ) {
   const originalTool = server.tool.bind(server);
 
@@ -177,10 +194,12 @@ export function injectHonoVar(
       async (args: any, context: any) => {
         const jwtToken = getJwt(); // from closure
         const projectId = getProjectId?.();
+        const teamId = getTeamId?.();
         const extendedContext = {
           ...context,
           jwtToken,
           projectId,
+          teamId,
         };
         return cb(args, extendedContext);
       }
