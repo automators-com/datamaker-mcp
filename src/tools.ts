@@ -970,7 +970,7 @@ export function registerTools(server: McpServer) {
   );
 
   server.tool(
-    "template_creation_from_json",
+    "create_template_from_json",
     "Create a template from uploaded JSON data and save it to the database. Returns the saved template with field definitions that can be used to generate synthetic data.",
     {
       json_data: z
